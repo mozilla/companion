@@ -1,0 +1,40 @@
+{
+  "name": "companion",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/my-element.es.js",
+  "exports": {
+    ".": "./dist/my-element.es.js"
+  },
+  "types": "types/my-element.d.ts",
+  "files": [
+    "dist",
+    "types"
+  ],
+  "scripts": {
+    "build": "vite build --base=/dist/ && web-ext build --overwrite-dest --ignore-files src public types yarn.lock vite.config.ts tsconfig.* package.json README.md *.html",
+    "lint": "eslint . --ext .ts",
+    "watch": "vite build --watch --base=/dist/",
+    "webext": "web-ext run --keep-profile-changes --watch-files manifest.json dist/*",
+    "dev": "concurrently \"yarn watch\" \"yarn webext\""
+  },
+  "dependencies": {
+    "eslint": "^8.25.0",
+    "lit": "^2.3.1",
+    "vite-plugin-eslint": "^1.8.1"
+  },
+  "devDependencies": {
+    "@types/firefox-webext-browser": "^94.0.1",
+    "@types/luxon": "^3.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.40.0",
+    "@typescript-eslint/parser": "^5.40.0",
+    "concurrently": "^7.4.0",
+    "dotenv": "^16.0.3",
+    "luxon": "^3.0.4",
+    "prettier": "^2.7.1",
+    "typescript": "^4.6.4",
+    "vite": "^3.1.0",
+    "web-ext": "^7.2.0"
+  }
+}

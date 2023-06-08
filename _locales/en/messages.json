@@ -1,0 +1,20 @@
+{
+    "service-name.google": {
+        "message": "Google Services"
+    },
+    "service-labels.google": {
+        "message": "Gmail, Google Calendar, Google Meet"
+    },
+    "connect": {
+        "message": "Connect"
+    },
+    "disconnect": {
+        "message": "Disconnect"
+    },
+    "connected": {
+        "message": "Connected"
+    },
+    "disconnected": {
+        "message": "Not connected"
+    }
+}

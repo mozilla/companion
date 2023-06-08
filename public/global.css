@@ -1,0 +1,64 @@
+html,
+body {
+  min-height: 100%;
+}
+body {
+  /*https://coolors.co/gradient-maker/e6d8d6-8d77b4?position=0,100&opacity=100,100&type=linear&rotation=135*/
+
+  background: hsla(7, 24%, 87%, 1);
+
+  background: linear-gradient(
+    315deg,
+    hsla(7, 24%, 87%, 1) 0%,
+    hsla(262, 29%, 59%, 1) 100%
+  );
+
+  background: -moz-linear-gradient(
+    315deg,
+    hsla(7, 24%, 87%, 1) 0%,
+    hsla(262, 29%, 59%, 1) 100%
+  );
+
+  background: -webkit-linear-gradient(
+    315deg,
+    hsla(7, 24%, 87%, 1) 0%,
+    hsla(262, 29%, 59%, 1) 100%
+  );
+
+  filter: progid: DXImageTransform.Microsoft.gradient( startColorstr="#E6D8D6", endColorstr="#8D77B4", GradientType=1 );
+  background-size: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+
+  color: var(--text-color);
+}
+
+/*
+note: sidebar view is not currently observing prefers-color-scheme
+
+@media screen and(prefers-color-scheme: dark) {
+  body {
+    background: hsla(10, 82%, 65%, 1);
+
+    background: linear-gradient(
+      45deg,
+      hsla(10, 82%, 65%, 1) 0%,
+      hsla(290, 79%, 13%, 1) 100%
+    );
+
+    background: -moz-linear-gradient(
+      45deg,
+      hsla(10, 82%, 65%, 1) 0%,
+      hsla(290, 79%, 13%, 1) 100%
+    );
+
+    background: -webkit-linear-gradient(
+      45deg,
+      hsla(10, 82%, 65%, 1) 0%,
+      hsla(290, 79%, 13%, 1) 100%
+    );
+
+    filter: progid: DXImageTransform.Microsoft.gradient( startColorstr="#EF745C", endColorstr="#34073D", GradientType=1 );
+  }
+}
+*/

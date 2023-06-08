@@ -1,0 +1,41 @@
+{
+  "manifest_version": 2,
+  "name": "Companion",
+  "version": "0.1.17",
+  "permissions": [
+    "notifications",
+    "storage",
+    "identity",
+    "alarms",
+    "clipboardWrite",
+    "tabs"
+  ],
+  "icons": {
+    "48": "icon48.png"
+  },
+  "sidebar_action": {
+    "default_title": "Companion",
+    "default_panel": "dist/index.html",
+    "default_icon": "icon48.png"
+  },
+  "commands": {
+    "_execute_sidebar_action": {
+      "suggested_key": {
+        "default": "Alt+C"
+      }
+    }
+  },
+  "background": {
+    "page": "dist/background.html"
+  },
+  "options_ui": {
+    "page": "dist/options.html",
+    "browser_style": true
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "companion@kaply.com"
+    }
+  },
+  "default_locale": "en"
+}

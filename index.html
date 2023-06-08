@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="vars.css" />
+    <link rel="stylesheet" type="text/css" href="global.css" />
+  </head>
+  <body>
+    <connectable-service-router type="google">
+      <connect-service-notification
+        slot="login"
+        type="google"
+      ></connect-service-notification>
+      <calendar-widget slot="run"></calendar-widget>
+      <div slot="disconnect"></div>
+    </connectable-service-router>
+
+    <script
+      type="module"
+      src="src/frontend/ConnectableServiceRouter.ts"
+    ></script>
+    <script
+      type="module"
+      src="src/frontend/ConnectServiceNotification.ts"
+    ></script>
+    <script
+      type="module"
+      src="src/frontend/calendar/CalendarWidget.ts"
+    ></script>
+  </body>
+</html>
