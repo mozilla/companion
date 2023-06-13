@@ -43,7 +43,7 @@ jobs:
           tag_name: v${{steps.version.outputs.prop}}
       - name: "web-ext sign"
         id: web-ext-sign
-        uses: kewisch/action-web-ext@v1
+        uses: ./.github/actions/action-web-ext
         with:
           cmd: sign
           source: ./web-ext-artifacts/companion-v${{steps.version.outputs.prop}}.xpi
