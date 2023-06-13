@@ -1,3 +1,6 @@
 [submodule ".github/actions/action-web-ext"]
 	path = .github/actions/action-web-ext
 	url = git@github.com:kewisch/action-web-ext.git
+[submodule ".github/actions/github-action-json-property"]
+	path = .github/actions/github-action-json-property
+	url = git@github.com:notiz-dev/github-action-json-property.git
