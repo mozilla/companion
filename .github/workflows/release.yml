@@ -5,6 +5,7 @@ on:
       - 'main'
     paths:
       - 'manifest.json'
+  workflow_dispatch:
 jobs:
   build_release:
     runs-on: ubuntu-latest
@@ -15,7 +16,7 @@ jobs:
           fetch-depth: 0
       - name: get version
         id: version
-        uses: ./github/actions/github-action-json-property
+        uses: ./.github/actions/github-action-json-property
         with: 
           path: 'manifest.json'
           prop_path: 'version'
