@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0
       - name: get version
         id: version
-        uses: notiz-dev/github-action-json-property@release
+        uses: ./github/actions/github-action-json-property
         with: 
           path: 'manifest.json'
           prop_path: 'version'
