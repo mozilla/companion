@@ -1,0 +1,3 @@
+[submodule ".github/actions/action-web-ext"]
+	path = .github/actions/action-web-ext
+	url = git@github.com:kewisch/action-web-ext.git
