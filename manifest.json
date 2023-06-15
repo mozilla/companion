@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Companion",
-  "version": "0.1.20",
+  "version": "0.5",
   "permissions": [
     "notifications",
     "storage",
@@ -34,7 +34,8 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "companion@kaply.com"
+      "id": "companion@mozilla-internal",
+      "update_url": "https://raw.githubusercontent.com/mozilla/companion/main/updates.json"
     }
   },
   "default_locale": "en"

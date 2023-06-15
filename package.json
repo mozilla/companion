@@ -13,7 +13,7 @@
     "types"
   ],
   "scripts": {
-    "build": "vite build --base=/dist/ && web-ext build --overwrite-dest --ignore-files src public types yarn.lock vite.config.ts tsconfig.* package.json README.md *.html",
+    "build": "vite build --base=/dist/ && web-ext build --overwrite-dest --ignore-files src public types yarn.lock vite.config.ts tsconfig.* package.json README.md *.html updates.json",
     "lint": "eslint . --ext .ts",
     "watch": "vite build --watch --base=/dist/",
     "webext": "web-ext run --keep-profile-changes --watch-files manifest.json dist/*",

@@ -1,0 +1,12 @@
+{
+    "addons": {
+      "companion@mozilla-internal": {
+        "updates": [
+          {
+            "version": "0.5",
+            "update_link": "https://github.com/mozilla/companion/releases/download/v0.5/companion-v0.5.xpi"
+          }
+        ]
+      }
+    }
+  }
