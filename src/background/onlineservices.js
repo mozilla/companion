@@ -238,6 +238,9 @@ export const OnlineServices = {
       return
     }
     let config = result['onlineservices.config']
+    if (!config) {
+      return
+    }
     for (let service of config) {
       if (service.type.startsWith('google')) {
         this.ServiceInstances.add(new GoogleService(service))

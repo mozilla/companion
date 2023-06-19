@@ -17,9 +17,11 @@ export class ConnectableServiceRouter extends LitElement {
         return
       }
       const config = result['onlineservices.config']
-      for (const service of config) {
-        if (service.type.startsWith(this.type)) {
-          this.mode = 'service-run'
+      if (config) {
+        for (const service of config) {
+          if (service.type.startsWith(this.type)) {
+            this.mode = 'service-run'
+          }
         }
       }
     })
