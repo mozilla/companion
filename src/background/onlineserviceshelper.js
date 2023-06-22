@@ -15,7 +15,7 @@ let patternsToIgnore = [
   /^https:\/\/www.microsoft.com\/microsoft-teams\/join-a-meeting/,
   /^https:\/\/www.microsoft.com\/.*\/microsoft-teams\/download-app/,
 ];
-  
+
 function processLink(url, text) {
   try {
     url = new URL(url);
@@ -248,7 +248,9 @@ export function getConferenceInfo(result, links) {
           }
         }
       }
-      return getConferencingDetails(locationURL);
+      if (locationURL) {
+        return getConferencingDetails(locationURL);
+      }
     } catch (e) {
       // Location didn't contain a URL
     }
