@@ -139,37 +139,37 @@ const conferencingInfo = [
   {
     name: "Zoom",
     domain: "zoom.us",
-    icon: "chrome://browser/content/companion/zoom.svg",
+    icon: browser.runtime.getURL("zoom.svg"),
   },
   {
     name: "Teams",
     domain: "teams.microsoft.com",
-    icon: "chrome://browser/content/companion/teams.png",
+    icon: browser.runtime.getURL("teams.png"),
   },
   {
     name: "Meet",
     domain: "meet.google.com",
-    icon: "chrome://browser/content/companion/meet.png",
+    icon: browser.runtime.getURL("meet.png"),
   },
   {
     name: "Jitsi",
     domain: "meet.jit.si",
-    icon: "chrome://browser/content/companion/jitsi.png",
+    icon: browser.runtime.getURL("jitsi.png"),
   },
   {
     name: "GoToMeeting",
     domain: ".gotomeeting.com",
-    icon: "chrome://browser/content/companion/gotomeeting.png",
+    icon: browser.runtime.getURL("gotomeeting.png"),
   },
   {
     name: "WebEx",
     domain: ".webex.com",
-    icon: "chrome://browser/content/companion/webex.png",
+    icon: browser.runtime.getURL("webex.png"),
   },
   {
     name: "Skype",
     domain: ".skype.com",
-    icon: "chrome://browser/content/companion/skype.svg",
+    icon: browser.runtime.getURL("skype.svg"),
   },
 ];
 

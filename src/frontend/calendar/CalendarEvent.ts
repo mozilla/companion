@@ -314,6 +314,8 @@ export class CalendarEvent extends LitElement {
 
     .join-meeting-link img {
       vertical-align: bottom;
+      height: 16px;
+      width: 16px;
     }
 
     .event-actions {
