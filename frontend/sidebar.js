@@ -48,6 +48,18 @@ function openUrl(url) {
   browser.tabs.query({ url }).then(tabs => {
     if (tabs.length && tabs[0].id) {
       browser.tabs.update(tabs[0].id, { active: true });
+      browser.windows.update(tabs[0].windowId, { focused: true });
+    } else {
+      window.open(url);
+    }
+  });
+}
+
+function openInCalendarTab(url) {
+  browser.tabs.query({ url: '*://calendar.google.com/*' }).then(tabs => {
+    if (tabs.length && tabs[0].id) {
+      browser.tabs.update(tabs[0].id, { active: true, url });
+      browser.windows.update(tabs[0].windowId, { focused: true });
     } else {
       window.open(url);
     }
@@ -127,7 +139,7 @@ function createHeroCard(event) {
   const title = document.createElement('h2');
   title.className = 'hero-title';
   title.textContent = event.summary;
-  title.addEventListener('click', () => window.open(event.url));
+  title.addEventListener('click', () => openInCalendarTab(event.url));
   card.appendChild(title);
 
   // Time range
@@ -240,7 +252,7 @@ function createCompactEvent(event) {
   const item = document.createElement('div');
   item.className = 'compact-event';
   item.style.cursor = 'pointer';
-  item.addEventListener('click', () => window.open(event.url));
+  item.addEventListener('click', () => openInCalendarTab(event.url));
 
   const time = document.createElement('span');
   time.className = 'compact-time';
