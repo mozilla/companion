@@ -1,26 +1,15 @@
 :root {
-  --border-radius: 18px;
-  --card-background-transparent: rgba(255, 255, 255, 0.2);
-  --card-background: rgba(255, 255, 255, 0.8);
-  --text-color: rgba(0, 0, 0, 0.8);
-  --text-color-light: #333;
-  --button-bg: #dde;
-  --button-text: rgba(0, 0, 0, 0.8);
-  --event-separator-color: rgba(0, 0, 0, 0.1);
+  --border-radius: 8px;
+  --card-background: Canvas;
+  --card-border: color-mix(in srgb, CanvasText 15%, transparent);
+  --text-color: CanvasText;
+  --text-color-secondary: GrayText;
+  --button-bg: ButtonFace;
+  --button-text: ButtonText;
+  --button-border: ButtonBorder;
+  --accent-color: AccentColor;
+  --accent-text: AccentColorText;
+  --event-separator-color: color-mix(in srgb, CanvasText 10%, transparent);
+  --now-color: #2ac3a2;
+  --now-text: #fff;
 }
-
-/*
-note: sidebar view is not currently observing prefers-color-scheme
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --card-background-transparent: rgba(0, 0, 0, 0.3);
-    --card-background: rgba(0, 0, 0, 0.6);
-    --text-color: rgba(255, 255, 255, 0.9);
-    --text-color-light: rgba(255, 255, 255, 0.7);
-    --button-text: var(--text-color);
-    --button-bg: rgba(255, 255, 255, 0.9);
-    --event-separator-color: rgba(255, 255, 255, 0.1);
-  }
-}
-*/

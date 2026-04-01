@@ -3,58 +3,45 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 let events = [];
-let showAllEvents = false;
 let now = new Date();
 let backendStatus = 'idle';
+let viewDate = 'today'; // 'today' | 'tomorrow'
 
-function isHappeningToday(startDate, endDate) {
-  if (!startDate) return false;
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-  const start = new Date(startDate);
-  if (!endDate) return start >= todayStart && start < todayEnd;
-  const end = new Date(endDate);
-  return start < todayEnd && end >= todayStart;
-}
+// ── Utilities ────────────────────────────────────────────────────────────────
 
 function formatTime(date) {
   return new Date(date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-function formatMonthDay(date) {
-  return new Date(date).toLocaleDateString([], { month: 'short', day: 'numeric' });
+const CONFERENCE_DOMAINS = ['zoom.us', 'teams.microsoft.com', 'meet.google.com', 'meet.jit.si', 'gotomeeting.com', 'webex.com', 'skype.com'];
+
+function isConferenceUrl(url) {
+  try {
+    const host = new URL(url).host;
+    return CONFERENCE_DOMAINS.some(domain => host.endsWith(domain));
+  } catch (e) {
+    return false;
+  }
 }
 
-function getNiceDateRange(event) {
-  const start = new Date(event.startDate);
-  const end = new Date(event.endDate);
-  const startToday = isHappeningToday(start);
-  const endToday = isHappeningToday(end);
+function sanitizeHTML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
 
-  if (startToday && endToday) {
-    if (event.isAllDay) return 'All day';
-    return `${formatTime(start)}\u2013${formatTime(end)}`;
-  }
-  if (startToday) return `Starts today at ${formatTime(start)}`;
-  if (endToday) return `Ends today at ${formatTime(end)}`;
+  // Remove dangerous elements
+  doc.querySelectorAll('script, style, iframe, object, embed, form').forEach(el => el.remove());
 
-  const sameDay = start.toDateString() === end.toDateString();
-  if (sameDay) {
-    if (event.isAllDay) return formatMonthDay(start);
-    return `${formatMonthDay(start)} ${formatTime(start)}\u2013${formatTime(end)}`;
-  }
-  if (event.isAllDay) return `${formatMonthDay(start)}\u2013${formatMonthDay(end)}`;
-  return `${formatMonthDay(start)} ${formatTime(start)}\u2013${formatMonthDay(end)} ${formatTime(end)}`;
-}
+  // Remove dangerous attributes
+  doc.querySelectorAll('*').forEach(el => {
+    Array.from(el.attributes).forEach(attr => {
+      if (attr.name.startsWith('on')) el.removeAttribute(attr.name);
+    });
+    if (el.hasAttribute('href') && el.getAttribute('href').startsWith('javascript:')) {
+      el.removeAttribute('href');
+    }
+  });
 
-function shouldShowEvent(event) {
-  if (showAllEvents) return isHappeningToday(event.startDate, event.endDate);
-  if (event.isAllDay) return false;
-  const eventEnd = new Date(event.endDate);
-  const eventStart = new Date(event.startDate);
-  if (eventEnd < now) return false;
-  const minutesUntilStart = (eventStart - now) / 60000;
-  return minutesUntilStart <= 30;
+  return doc.body.innerHTML;
 }
 
 function openUrl(url) {
@@ -67,205 +54,284 @@ function openUrl(url) {
   });
 }
 
-function createActionButton(icon, text, onClick) {
-  const btn = document.createElement('button');
-  btn.className = 'action-button';
-  btn.addEventListener('click', onClick);
-
-  const iconContainer = document.createElement('div');
-  iconContainer.className = 'action-button-icon-container';
-  const img = document.createElement('img');
-  img.className = 'action-button-icon';
-  img.src = icon;
-  img.setAttribute('role', 'presentation');
-  iconContainer.appendChild(img);
-  btn.appendChild(iconContainer);
-
-  const label = document.createElement('span');
-  label.className = 'action-button-label';
-  label.textContent = text;
-  btn.appendChild(label);
-
-  return btn;
-}
-
-function createEventElement(event) {
-  const el = document.createElement('div');
-  el.className = 'calendar-event';
-  let expanded = false;
-
-  function render() {
-    el.innerHTML = '';
-
-    // Header
-    const headerWrap = document.createElement('div');
-    headerWrap.className = 'event-header-wrap';
-
-    const header = document.createElement('div');
-    header.className = 'event-header';
-
-    const title = document.createElement('h3');
-    title.className = 'event-title';
-    title.title = event.summary;
-    title.textContent = event.summary;
-    header.appendChild(title);
-
-    const dateRange = document.createElement('em');
-    dateRange.textContent = getNiceDateRange(event);
-    header.appendChild(dateRange);
-
-    if (event.creator && event.creator.email) {
-      const creator = document.createElement('em');
-      creator.textContent = event.creator.email;
-      header.appendChild(creator);
-    }
-
-    headerWrap.appendChild(header);
-
-    const toggleBtn = document.createElement('button');
-    toggleBtn.className = 'event-view-toggle';
-    toggleBtn.title = expanded ? 'Collapse view' : 'Expand view';
-    const arrow = document.createElement('img');
-    arrow.alt = expanded ? 'upward pointing arrow' : 'downward pointing arrow';
-    arrow.src = expanded ? 'public/arrow-up.svg' : 'public/arrow-down.svg';
-    toggleBtn.appendChild(arrow);
-    toggleBtn.addEventListener('click', () => {
-      expanded = !expanded;
-      render();
-    });
-    headerWrap.appendChild(toggleBtn);
-
-    el.appendChild(headerWrap);
-
-    // Conference join button
-    if (event.conference) {
-      const confDiv = document.createElement('div');
-      confDiv.className = 'event-conferencedetails';
-      const joinLink = document.createElement('a');
-      joinLink.className = 'join-meeting-link';
-      joinLink.href = '#';
-      joinLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        openUrl(event.conference.url);
-      });
-      joinLink.textContent = 'Join meeting ';
-      const icon = document.createElement('img');
-      icon.src = event.conference.icon;
-      icon.style.height = '16px';
-      icon.style.width = '16px';
-      icon.style.verticalAlign = 'bottom';
-      joinLink.appendChild(icon);
-      confDiv.appendChild(joinLink);
-      el.appendChild(confDiv);
-    }
-
-    // Links
-    if (event.links && event.links.length > 0) {
-      const linkList = document.createElement('ul');
-      linkList.className = 'event-links';
-      event.links.forEach(link => {
-        const li = document.createElement('li');
-        const a = document.createElement('a');
-        a.href = '#';
-        a.addEventListener('click', (e) => {
-          e.preventDefault();
-          openUrl(link.url);
-        });
-        const linkText = (link.text && link.text.length > 0)
-          ? link.text
-          : new URL(link.url).host;
-        a.textContent = `\u2197\u00a0${linkText}`;
-        li.appendChild(a);
-        linkList.appendChild(li);
-      });
-      el.appendChild(linkList);
-    }
-
-    // Expanded actions
-    if (expanded) {
-      const actionsDiv = document.createElement('div');
-      actionsDiv.className = 'event-actions';
-
-      if (event.conference) {
-        actionsDiv.appendChild(createActionButton(
-          'chrome://global/skin/icons/link.svg',
-          'Copy invite link',
-          async () => { await navigator.clipboard.writeText(event.conference.url); }
-        ));
-      }
-
-      if (event.attendees && event.attendees.length > 0) {
-        const emailList = event.attendees.map(a => a.email).join(',');
-        actionsDiv.appendChild(createActionButton(
-          'chrome://global/skin/icons/lightbulb.svg',
-          'E-mail attendees',
-          () => { window.open(`mailto:${emailList}`); }
-        ));
-      }
-
-      actionsDiv.appendChild(createActionButton(
-        'chrome://global/skin/icons/open-in-new.svg',
-        'Open in calendar',
-        () => { window.open(event.url); }
-      ));
-
-      el.appendChild(actionsDiv);
-    }
+// Returns { label, type } where type is 'now' | 'soon' | 'later'
+function getEventStatus(event) {
+  if (viewDate === 'tomorrow') {
+    return { label: formatTime(event.startDate), type: 'later' };
   }
 
-  render();
-  return el;
+  const start = new Date(event.startDate);
+  const end = new Date(event.endDate);
+
+  if (now >= start && now < end) {
+    return { label: 'Now', type: 'now' };
+  }
+
+  const minutesUntil = (start - now) / 60000;
+  if (minutesUntil <= 60) {
+    return { label: `In ${Math.ceil(minutesUntil)} min`, type: 'soon' };
+  }
+
+  return { label: formatTime(start), type: 'later' };
 }
+
+// Returns the next workday date (tomorrow normally, Monday on Fridays)
+function getNextWorkday() {
+  const day = now.getDay();
+  const daysAhead = day === 5 ? 3 : day === 6 ? 2 : 1;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysAhead);
+}
+
+function getNextDayLabel() {
+  return now.getDay() === 5 ? 'Next Mon' : 'Tomorrow';
+}
+
+// Returns the target day's non-all-day events, sorted by start time
+function getUpcomingEvents() {
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+
+  if (viewDate === 'today') {
+    return (events || [])
+      .filter(e => !e.isAllDay)
+      .filter(e => new Date(e.startDate) < todayEnd && new Date(e.endDate) > now)
+      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  }
+
+  const nextDay = getNextWorkday();
+  const nextDayEnd = new Date(nextDay.getTime() + 24 * 60 * 60 * 1000);
+  return (events || [])
+    .filter(e => !e.isAllDay)
+    .filter(e => {
+      const start = new Date(e.startDate);
+      return start >= nextDay && start < nextDayEnd;
+    })
+    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+}
+
+// ── Event card builders ───────────────────────────────────────────────────────
+
+function createHeroCard(event) {
+  const status = getEventStatus(event);
+
+  const card = document.createElement('div');
+  card.className = `hero-card status-${status.type}`;
+
+  // Status badge
+  const badge = document.createElement('div');
+  badge.className = 'status-badge';
+  badge.textContent = status.label;
+  card.appendChild(badge);
+
+  // Title (clicks to open in calendar)
+  const title = document.createElement('h2');
+  title.className = 'hero-title';
+  title.textContent = event.summary;
+  title.addEventListener('click', () => window.open(event.url));
+  card.appendChild(title);
+
+  // Time range
+  const time = document.createElement('div');
+  time.className = 'hero-time';
+  time.textContent = `${formatTime(event.startDate)}\u2013${formatTime(event.endDate)}`;
+  card.appendChild(time);
+
+  // Join button
+  if (event.conference) {
+    const joinBtn = document.createElement('a');
+    joinBtn.className = 'join-btn';
+    joinBtn.href = '#';
+    joinBtn.addEventListener('click', e => {
+      e.preventDefault();
+      openUrl(event.conference.url);
+    });
+
+    const icon = document.createElement('img');
+    icon.className = 'join-btn-icon';
+    icon.src = event.conference.icon;
+    icon.setAttribute('role', 'presentation');
+    joinBtn.appendChild(icon);
+
+    joinBtn.appendChild(document.createTextNode(`Join ${event.conference.name}`));
+    card.appendChild(joinBtn);
+  }
+
+  // Description (collapsed by default)
+  if (event.description && event.description.trim()) {
+    const divider = document.createElement('hr');
+    divider.className = 'hero-description-divider';
+    card.appendChild(divider);
+
+    const toggle = document.createElement('div');
+    toggle.className = 'hero-description-toggle';
+
+    const label = document.createElement('span');
+    label.className = 'hero-section-label';
+    label.textContent = 'Description';
+    toggle.appendChild(label);
+
+    const arrow = document.createElement('img');
+    arrow.className = 'hero-description-arrow';
+    arrow.src = 'public/arrow-down.svg';
+    arrow.setAttribute('role', 'presentation');
+    toggle.appendChild(arrow);
+
+    const desc = document.createElement('div');
+    desc.className = 'hero-description';
+    desc.style.display = 'none';
+    desc.innerHTML = sanitizeHTML(event.description);
+
+    desc.querySelectorAll('a[href]').forEach(a => {
+      if (isConferenceUrl(a.href)) {
+        const parent = a.parentElement;
+        a.remove();
+        if (parent && parent !== desc && !parent.textContent.trim()) {
+          parent.remove();
+        }
+      } else {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          openUrl(a.href);
+        });
+      }
+    });
+
+    toggle.addEventListener('click', () => {
+      const isExpanded = desc.style.display !== 'none';
+      desc.style.display = isExpanded ? 'none' : 'block';
+      arrow.classList.toggle('expanded', !isExpanded);
+    });
+
+    card.appendChild(toggle);
+    card.appendChild(desc);
+  }
+
+  // Attachments
+  if (event.attachments && event.attachments.length > 0) {
+    const docsSection = document.createElement('div');
+    docsSection.className = 'hero-docs';
+
+    const docsLabel = document.createElement('div');
+    docsLabel.className = 'hero-section-label';
+    docsLabel.textContent = 'Documents';
+    docsSection.appendChild(docsLabel);
+
+    event.attachments.forEach(attachment => {
+      const link = document.createElement('a');
+      link.className = 'hero-link-chip';
+      link.href = '#';
+      link.title = attachment.url;
+      link.textContent = attachment.text || new URL(attachment.url).host;
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        openUrl(attachment.url);
+      });
+      docsSection.appendChild(link);
+    });
+
+    card.appendChild(docsSection);
+  }
+
+
+  return card;
+}
+
+function createCompactEvent(event) {
+  const item = document.createElement('div');
+  item.className = 'compact-event';
+  item.style.cursor = 'pointer';
+  item.addEventListener('click', () => window.open(event.url));
+
+  const time = document.createElement('span');
+  time.className = 'compact-time';
+  time.textContent = formatTime(event.startDate);
+  item.appendChild(time);
+
+  const title = document.createElement('span');
+  title.className = 'compact-title';
+  title.textContent = event.summary;
+  item.appendChild(title);
+
+  if (event.conference) {
+    const joinLink = document.createElement('a');
+    joinLink.className = 'compact-join';
+    joinLink.href = '#';
+    joinLink.title = `Join ${event.conference.name}`;
+    joinLink.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openUrl(event.conference.url);
+    });
+
+    const icon = document.createElement('img');
+    icon.className = 'compact-join-icon';
+    icon.src = event.conference.icon;
+    icon.alt = `Join ${event.conference.name}`;
+    joinLink.appendChild(icon);
+    item.appendChild(joinLink);
+  }
+
+  return item;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
 
 function renderCalendar() {
   const container = document.getElementById('calendar-view');
   container.innerHTML = '';
 
-  // Now / Today toggle
-  const buttonGroup = document.createElement('div');
-  buttonGroup.className = 'card button-group';
+  // Keep the next-day button label current
+  const tomorrowBtn = document.getElementById('view-tomorrow-btn');
+  if (tomorrowBtn) tomorrowBtn.textContent = getNextDayLabel();
 
-  const nowBtn = document.createElement('button');
-  nowBtn.textContent = 'Now';
-  nowBtn.title = 'Show events happening soon';
-  nowBtn.disabled = !showAllEvents;
-  nowBtn.addEventListener('click', () => {
-    showAllEvents = false;
-    renderCalendar();
-  });
-  buttonGroup.appendChild(nowBtn);
+  const upcoming = getUpcomingEvents();
 
-  const spacer = document.createElement('div');
-  spacer.className = 'flex-spacer';
-  buttonGroup.appendChild(spacer);
+  if (upcoming.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
 
-  const todayBtn = document.createElement('button');
-  todayBtn.textContent = 'Today';
-  todayBtn.title = 'Show all events for today';
-  todayBtn.disabled = showAllEvents;
-  todayBtn.addEventListener('click', () => {
-    showAllEvents = true;
-    renderCalendar();
-  });
-  buttonGroup.appendChild(todayBtn);
+    if (backendStatus === 'fetching') {
+      const text = document.createElement('div');
+      text.className = 'empty-subtitle';
+      text.textContent = 'Loading events\u2026';
+      empty.appendChild(text);
+    } else {
+      const icon = document.createElement('div');
+      icon.className = 'empty-icon';
+      icon.textContent = '🎉';
+      empty.appendChild(icon);
 
-  container.appendChild(buttonGroup);
+      const title = document.createElement('div');
+      title.className = 'empty-title';
+      title.textContent = 'You\'re free for the rest of the day';
+      empty.appendChild(title);
 
-  // Events list
-  const card = document.createElement('div');
-  card.className = 'card';
+      const subtitle = document.createElement('div');
+      subtitle.className = 'empty-subtitle';
+      subtitle.textContent = 'No more meetings today';
+      empty.appendChild(subtitle);
+    }
 
-  const visibleEvents = (events || []).filter(shouldShowEvent);
-  if (visibleEvents.length > 0) {
-    visibleEvents.forEach(event => card.appendChild(createEventElement(event)));
-  } else {
-    const placeholder = document.createElement('div');
-    placeholder.className = 'event-placeholder';
-    placeholder.textContent = 'No events to show.';
-    card.appendChild(placeholder);
+    container.appendChild(empty);
+    return;
   }
 
-  container.appendChild(card);
+  // Hero: most imminent event
+  container.appendChild(createHeroCard(upcoming[0]));
+
+  // Later today
+  if (upcoming.length > 1) {
+    const section = document.createElement('div');
+    section.className = 'later-section';
+
+    const label = document.createElement('div');
+    label.className = 'section-label';
+    label.textContent = 'Later today';
+    section.appendChild(label);
+
+    upcoming.slice(1).forEach(event => section.appendChild(createCompactEvent(event)));
+    container.appendChild(section);
+  }
 
   // Loading spinner
   if (backendStatus === 'fetching') {
@@ -278,46 +344,94 @@ function renderCalendar() {
   }
 }
 
+// ── View management ───────────────────────────────────────────────────────────
+
 function showLoginView() {
+  document.getElementById('footer').style.display = 'none';
+  document.getElementById('settings-popup').style.display = 'none';
   document.getElementById('login-view').style.display = 'block';
   document.getElementById('calendar-view').style.display = 'none';
-  document.getElementById('disconnect-section').style.display = 'none';
 }
 
 function showCalendarView() {
+  document.getElementById('footer').style.display = 'block';
   document.getElementById('login-view').style.display = 'none';
   document.getElementById('calendar-view').style.display = 'block';
-  document.getElementById('disconnect-section').style.display = 'block';
   renderCalendar();
 }
 
 async function syncStorage() {
-  const eventData = await browser.storage.local.get('events');
-  const statusData = await browser.storage.local.get('status');
+  const [eventData, statusData] = await Promise.all([
+    browser.storage.local.get('events'),
+    browser.storage.local.get('status'),
+  ]);
   events = eventData.events || [];
   backendStatus = statusData.status || 'idle';
+
+  const refreshIcon = document.querySelector('#refresh-btn img');
+  if (refreshIcon) {
+    refreshIcon.classList.toggle('spinning', backendStatus === 'fetching');
+  }
+
   renderCalendar();
 }
 
+// ── Init ──────────────────────────────────────────────────────────────────────
+
 async function init() {
+  // i18n
   document.getElementById('service-name').textContent =
     browser.i18n.getMessage('service-name.google');
   document.getElementById('service-description').textContent =
     browser.i18n.getMessage('service-labels.google');
+  document.getElementById('connect-btn').textContent =
+    browser.i18n.getMessage('connect');
+  document.getElementById('disconnect-btn').textContent =
+    browser.i18n.getMessage('disconnect');
 
-  const connectBtn = document.getElementById('connect-btn');
-  connectBtn.textContent = browser.i18n.getMessage('connect');
-  connectBtn.addEventListener('click', () => {
+  // Connect button
+  document.getElementById('connect-btn').addEventListener('click', () => {
     browser.runtime.sendMessage({ command: 'signin', service: 'google' });
   });
 
-  const disconnectBtn = document.getElementById('disconnect-btn');
-  disconnectBtn.textContent = browser.i18n.getMessage('disconnect');
-  disconnectBtn.addEventListener('click', () => {
+  // Today / Tomorrow toggle
+  document.getElementById('view-today-btn').addEventListener('click', () => {
+    viewDate = 'today';
+    document.getElementById('view-today-btn').classList.add('active');
+    document.getElementById('view-tomorrow-btn').classList.remove('active');
+    renderCalendar();
+  });
+  document.getElementById('view-tomorrow-btn').addEventListener('click', () => {
+    viewDate = 'tomorrow';
+    document.getElementById('view-tomorrow-btn').classList.add('active');
+    document.getElementById('view-today-btn').classList.remove('active');
+    renderCalendar();
+  });
+
+  // Refresh button
+  document.getElementById('refresh-btn').addEventListener('click', () => {
+    browser.runtime.sendMessage({ command: 'refresh' });
+  });
+
+  // Settings gear toggle
+  document.getElementById('settings-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const popup = document.getElementById('settings-popup');
+    popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // Close popup when clicking outside
+  document.addEventListener('click', () => {
+    document.getElementById('settings-popup').style.display = 'none';
+  });
+
+  // Disconnect button
+  document.getElementById('disconnect-btn').addEventListener('click', () => {
+    document.getElementById('settings-popup').style.display = 'none';
     browser.runtime.sendMessage({ command: 'signout', service: 'google' });
   });
 
-  // Check initial connection state
+  // Initial connection check
   const result = await browser.storage.local.get('onlineservices.config');
   const config = result['onlineservices.config'];
   const connected = config && config.some(s => s.type.startsWith('google'));
@@ -346,7 +460,7 @@ async function init() {
     }
   });
 
-  // Refresh the "Now" view every minute
+  // Refresh the hero status label every minute
   browser.alarms.create('sidebar-clock', { periodInMinutes: 1 });
   browser.alarms.onAlarm.addListener(alarm => {
     if (alarm.name === 'sidebar-clock') {

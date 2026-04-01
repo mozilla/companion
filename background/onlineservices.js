@@ -98,11 +98,11 @@ class GoogleService {
 
     let calendarList = []
     for (let result of results.items) {
-      if (result.hidden || !result.selected) {
+      if (!result.primary) {
         continue
       }
       let calendar = {}
-      calendar.id = result.primary ? 'primary' : result.id
+      calendar.id = 'primary'
       calendar.backgroundColor = result.backgroundColor
       calendar.foregroundColor = result.foregroundColor
       calendarList.push(calendar)
@@ -123,7 +123,10 @@ class GoogleService {
         dayStart.setHours(0, 0, 0, 0)
         apiTarget.searchParams.set('timeMin', dayStart.toISOString())
         let midnight = new Date()
-        midnight.setHours(24, 0, 0, 0)
+        midnight.setHours(0, 0, 0, 0)
+        // On Fridays fetch through Monday, otherwise just through tomorrow
+        const daysAhead = midnight.getDay() === 5 ? 4 : 2
+        midnight.setDate(midnight.getDate() + daysAhead)
         apiTarget.searchParams.set('timeMax', midnight.toISOString())
 
         headers = {

@@ -236,11 +236,9 @@ export function parseGoogleCalendarResult(result, primaryEmail) {
 
   event.startDate = new Date(start);
   event.endDate = new Date(end);
+  event.description = result.description || '';
   let links = getLinkInfo(result);
-  let attachments = getAttachmentInfo(result.attachments);
-  event.links = [...attachments, ...links].filter(
-    link => link.type != "conferencing"
-  );
+  event.attachments = getAttachmentInfo(result.attachments);
   event.conference = getConferenceInfo(result, links);
   event.attendees =
     result.attendees?.filter(a => !a.self && a.responseStatus !== "declined") ||
