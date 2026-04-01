@@ -437,6 +437,14 @@ async function init() {
     document.getElementById('settings-popup').style.display = 'none';
   });
 
+  // Notifications toggle
+  const notifToggle = document.getElementById('notifications-toggle');
+  const { notificationsEnabled } = await browser.storage.local.get('notificationsEnabled');
+  notifToggle.checked = notificationsEnabled !== false;
+  notifToggle.addEventListener('change', () => {
+    browser.storage.local.set({ notificationsEnabled: notifToggle.checked });
+  });
+
   // Disconnect button
   document.getElementById('disconnect-btn').addEventListener('click', () => {
     document.getElementById('settings-popup').style.display = 'none';

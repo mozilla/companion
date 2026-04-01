@@ -20,12 +20,14 @@ function isHappeningToday(startDate, endDate) {
 }
 
 async function maybeNotify() {
+  const { notificationsEnabled } = await browser.storage.local.get('notificationsEnabled');
+  if (notificationsEnabled === false) return;
   const key = formatTime24(new Date());
   const { notificationSchedule } = await browser.storage.local.get('notificationSchedule');
   if (!notificationSchedule) return;
   const toNotify = notificationSchedule.get(key);
   if (toNotify && toNotify.length > 0) {
-    toNotify.forEach(notif => browser.notifications.create({ type: 'basic', ...notif }));
+    toNotify.forEach(notif => browser.notifications.create({ type: 'basic', iconUrl: browser.runtime.getURL('icon48.png'), ...notif }));
   }
 }
 
