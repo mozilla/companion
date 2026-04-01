@@ -26,9 +26,6 @@ jobs:
       - name: install web-ext
         run: npm install -g web-ext
 
-      - name: build
-        run: web-ext build --filename=companion-v${{ steps.version.outputs.version }}.xpi
-
       - name: sign extension
         run: |
           web-ext sign \
@@ -43,6 +40,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
+          SIGNED_XPI=$(ls web-ext-artifacts/*.xpi | head -1)
           gh release create v${{ steps.version.outputs.version }} \
             --title "v${{ steps.version.outputs.version }}" \
-            web-ext-artifacts/companion-v${{ steps.version.outputs.version }}.xpi
+            "${SIGNED_XPI}#companion-v${{ steps.version.outputs.version }}.xpi"
