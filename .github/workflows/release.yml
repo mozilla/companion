@@ -11,54 +11,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          submodules: 'true'
+        uses: actions/checkout@v4
+
       - name: get version
         id: version
-        uses: ./.github/actions/github-action-json-property
-        with: 
-          path: 'manifest.json'
-          prop_path: 'version'
-      - name: setup node
-        uses: actions/setup-node@v2
-        with:
-          cache: 'yarn'
-      - name: install deps
-        run: yarn install --frozen-lockfile
+        run: echo "version=$(jq -r .version manifest.json)" >> $GITHUB_OUTPUT
+
+      - name: inject secrets
+        run: |
+          sed -e "s/GOOGLE_CLIENT_ID/${{ secrets.GOOGLE_CLIENT_ID }}/g" \
+              -e "s/GOOGLE_CLIENT_SECRET/${{ secrets.GOOGLE_CLIENT_SECRET }}/g" \
+              background/secrets.js.template > background/secrets.js
+
+      - name: install web-ext
+        run: npm install -g web-ext
+
       - name: build
-        run: yarn build
-        env:
-          WEB_EXT_FILENAME: companion-v${{steps.version.outputs.prop}}.xpi
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+        run: web-ext build --filename=companion-v${{ steps.version.outputs.version }}.xpi
+
+      - name: sign extension
+        run: |
+          web-ext sign \
+            --source-dir=. \
+            --artifacts-dir=web-ext-artifacts \
+            --channel=unlisted \
+            --api-key=${{ secrets.AMO_JWT_ISSUER }} \
+            --api-secret=${{ secrets.AMO_JWT_SECRET }} \
+            --timeout=900000
+
       - name: release
-        uses: actions/create-release@v1
-        id: create_release
-        env:
-          GITHUB_TOKEN: ${{github.token}}
+        uses: softprops/action-gh-release@v2
         with:
-          draft: false
-          prerelease: false
-          release_name: v${{steps.version.outputs.prop}}
-          tag_name: v${{steps.version.outputs.prop}}
-      - name: "web-ext sign"
-        id: web-ext-sign
-        uses: ./.github/actions/action-web-ext
-        with:
-          cmd: sign
-          source: ./web-ext-artifacts/companion-v${{steps.version.outputs.prop}}.xpi
-          channel: unlisted
-          apiKey: ${{ secrets.AMO_JWT_ISSUER }}
-          apiSecret: ${{ secrets.AMO_JWT_SECRET }}
-          timeout: 900000
-      - name: upload extension file
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{github.token}}
-        with:
-          upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: ${{steps.web-ext-sign.outputs.target}}
-          asset_name: companion-v${{steps.version.outputs.prop}}.xpi
-          asset_content_type: application/x-xpinstall
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          files: web-ext-artifacts/companion-v${{ steps.version.outputs.version }}.xpi

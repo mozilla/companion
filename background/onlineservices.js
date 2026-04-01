@@ -5,21 +5,16 @@
 import { OAuth2 } from './oauth2.js'
 import { parseGoogleCalendarResult } from './onlineserviceshelper.js'
 
-const clientId = 'GOOGLE_CLIENT_ID'
-const clientSecret = 'GOOGLE_CLIENT_SECRET'
+import { clientId, clientSecret } from './secrets.js'
 
 const kIssuers = {
   google: {
     endpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
     tokenEndpoint: 'https://oauth2.googleapis.com/token',
     scope: [
-      // For getting the email address
       'https://www.googleapis.com/auth/userinfo.email',
-      // For getting calendar events
       'https://www.googleapis.com/auth/calendar.events.readonly',
-      // For getting the list of calendars
       'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
-      // For getting titles of documents
       'https://www.googleapis.com/auth/drive.metadata.readonly',
     ],
     clientId,
@@ -28,7 +23,6 @@ const kIssuers = {
 }
 
 class GoogleService {
-  app
   #auth
   constructor(config) {
     this.app = config.type
@@ -45,8 +39,6 @@ class GoogleService {
   }
 
   async connect() {
-    // This will force a new OAuth login if not logged in or the token
-    // has expired.
     let token = await this.#auth.connect()
     if (token) {
       OnlineServices.persist()
@@ -54,16 +46,11 @@ class GoogleService {
     return token
   }
 
-  notifyListeners(eventName, data) {
-    // Need to update for WebExtension so errors are proessed
-  }
-
   async getToken() {
     let token = await this.#auth.getToken()
     if (token) {
       OnlineServices.persist()
     } else if (this.#auth.tokenError) {
-      // A token error means we've lost access.
       this.authError(`${this.name} OAuth token invalid.`)
     }
     return token
@@ -72,7 +59,6 @@ class GoogleService {
   authError(error) {
     console.error(error, `Deleting ${this.name} service.`)
     OnlineServices.deleteService(this)
-    // Send message so sidebar can show error message
   }
 
   async getNextMeetings() {
@@ -92,20 +78,10 @@ class GoogleService {
     let response
     let hadError = this.hasConnectionError
     try {
-      response = await fetch(apiTarget, {
-        headers,
-      })
+      response = await fetch(apiTarget, { headers })
       this.hasConnectionError = false
-      if (hadError) {
-        this.notifyListeners('status', { status: 'connected' })
-      }
     } catch (ex) {
       this.hasConnectionError = true
-      if (!hadError) {
-        this.notifyListeners('status', { status: 'error' })
-      }
-      // If we fail here, it's probably a network error.
-      // Return null so we can detect this situation.
       return null
     }
 
@@ -120,15 +96,13 @@ class GoogleService {
       return []
     }
 
-    // console.debug(JSON.stringify(results))
-
     let calendarList = []
     for (let result of results.items) {
-      if (result.hidden || !result.selected) {
+      if (!result.primary) {
         continue
       }
       let calendar = {}
-      calendar.id = result.primary ? 'primary' : result.id
+      calendar.id = 'primary'
       calendar.backgroundColor = result.backgroundColor
       calendar.foregroundColor = result.foregroundColor
       calendarList.push(calendar)
@@ -148,20 +122,18 @@ class GoogleService {
         let dayStart = new Date()
         dayStart.setHours(0, 0, 0, 0)
         apiTarget.searchParams.set('timeMin', dayStart.toISOString())
-        // If we want to reduce the window, we can just make
-        // timeMax an hour from now.
         let midnight = new Date()
-        midnight.setHours(24, 0, 0, 0)
+        midnight.setHours(0, 0, 0, 0)
+        // On Fridays fetch through Monday, otherwise just through tomorrow
+        const daysAhead = midnight.getDay() === 5 ? 4 : 2
+        midnight.setDate(midnight.getDate() + daysAhead)
         apiTarget.searchParams.set('timeMax', midnight.toISOString())
 
         headers = {
           Authorization: `Bearer ${token}`,
         }
 
-        response = await fetch(apiTarget, {
-          headers,
-        })
-
+        response = await fetch(apiTarget, { headers })
         results = await response.json()
 
         if (!response.ok) {
@@ -172,8 +144,6 @@ class GoogleService {
           }
           return
         }
-
-        // console.debug(JSON.stringify(results))
 
         for (let result of results.items) {
           try {
@@ -190,17 +160,12 @@ class GoogleService {
             }
             let event = parseGoogleCalendarResult(result, this.emailAddress)
             if (!event) {
-              // Allow parseGoogleCalendarResult to throw out certain events
               continue;
             }
-            event.calendar = {
-              id: calendar.id,
-            }
+            event.calendar = { id: calendar.id }
             event.serviceType = this.app
             event.serviceId = this.id
             if (allEvents.has(result.id)) {
-              // If an event is duplicated, use
-              // the primary calendar
               if (calendar.id == 'primary') {
                 allEvents.set(result.id, event)
               }
@@ -234,13 +199,9 @@ export const OnlineServices = {
 
   async init() {
     let result = await browser.storage.local.get('onlineservices.config')
-    if (!result) {
-      return
-    }
+    if (!result) return
     let config = result['onlineservices.config']
-    if (!config) {
-      return
-    }
+    if (!config) return
     for (let service of config) {
       if (service.type.startsWith('google')) {
         this.ServiceInstances.add(new GoogleService(service))
@@ -277,8 +238,6 @@ export const OnlineServices = {
 
   async deleteService(service) {
     try {
-      // Try to clean up our token, this could fail if the user already revoked
-      // the credentials with the service.
       await service.disconnect()
     } catch (e) {
       console.log(e)
@@ -300,23 +259,12 @@ export const OnlineServices = {
     }
     this.alreadyFetching = true
 
-    let meetingResults = new Array(servicesData.length)
-    let i = 0
-    for (let service of servicesData) {
-      meetingResults[i] = service.getNextMeetings()
-      i++
-    }
-
+    let meetingResults = servicesData.map(service => service.getNextMeetings())
     let eventResults = await Promise.allSettled(meetingResults)
 
-    // Only update the events if at least one service successfully responds.
-    // If all services failed then there was likely a network error.
     if (eventResults.some((r) => r.value != null)) {
       let events = eventResults.flatMap((r) => r.value || [])
-      // Set events in preferences
       browser.storage.local.set({ events })
-      //      this.setCache(events);
-      //      Services.obs.notifyObservers(events, "companion-services-refresh");
     }
 
     this.alreadyFetching = false

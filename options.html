@@ -1,10 +1,60 @@
+<!DOCTYPE html>
 <html>
-  <head> </head>
+  <head>
+    <style>
+      .service-wrapper {
+        display: grid;
+        grid-template-columns: 300px auto auto;
+        grid-column-gap: 64px;
+        align-items: center;
+        padding: 16px;
+      }
+      .service-info-container {
+        display: flex;
+      }
+      .service-icon {
+        height: 32px;
+        width: 32px;
+        margin-inline-end: 16px;
+        align-self: center;
+      }
+      .service-info {
+        display: flex;
+        flex-direction: column;
+      }
+      .service-labels,
+      .status-text {
+        color: var(--in-content-deemphasized-text);
+        font-size: 85%;
+        white-space: nowrap;
+      }
+      .status-connected::before {
+        display: inline-block;
+        content: "";
+        padding: 2px;
+        margin-inline-end: 4px;
+        border-radius: 100%;
+        background-color: #2ac3a2;
+        height: 4px;
+        width: 4px;
+      }
+    </style>
+  </head>
   <body>
-    <service-row type="google"></service-row>
-    <script
-      type="module"
-      src="src/options/options.ts">
-    </script>
+    <div class="service-wrapper">
+      <div class="service-info-container">
+        <img class="service-icon" src="public/googleAccount.png" />
+        <div class="service-info">
+          <div id="service-name"></div>
+          <div class="service-labels" id="service-labels"></div>
+        </div>
+      </div>
+      <div class="service-status">
+        <div class="status-text">STATUS</div>
+        <div class="status-text" id="connection-status"></div>
+      </div>
+      <button id="connect-disconnect-btn"></button>
+    </div>
+    <script type="module" src="frontend/options.js"></script>
   </body>
 </html>
