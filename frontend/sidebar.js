@@ -291,6 +291,9 @@ function createCompactEvent(event) {
 function renderCalendar() {
   const container = document.getElementById('calendar-view');
   container.innerHTML = '';
+  container.style.animation = 'none';
+  container.offsetHeight; // force reflow
+  container.style.animation = '';
 
   // Keep the next-day button label current
   const tomorrowBtn = document.getElementById('view-tomorrow-btn');
@@ -331,7 +334,7 @@ function renderCalendar() {
   if (viewDate === 'tomorrow') {
     // Flat list for tomorrow — no urgency, no hero card
     const section = document.createElement('div');
-    section.className = 'later-section';
+    section.className = 'later-section later-section-tomorrow';
 
     const label = document.createElement('div');
     label.className = 'section-label';

@@ -255,6 +255,9 @@
       .later-section {
         margin: 0 12px 12px;
       }
+      .later-section-tomorrow {
+        margin-top: 24px;
+      }
       .section-label {
         font-size: 10px;
         font-weight: 700;
@@ -299,6 +302,14 @@
       .compact-join-icon {
         width: 14px;
         height: 14px;
+      }
+
+      #calendar-view {
+        animation: fadeIn 0.15s ease;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
 
       /* ── Empty / done state ── */
