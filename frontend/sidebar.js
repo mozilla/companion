@@ -407,13 +407,15 @@ async function init() {
   });
 
   // Today / Tomorrow toggle
-  document.getElementById('view-today-btn').addEventListener('click', () => {
+  document.getElementById('view-today-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
     viewDate = 'today';
     document.getElementById('view-today-btn').classList.add('active');
     document.getElementById('view-tomorrow-btn').classList.remove('active');
     renderCalendar();
   });
-  document.getElementById('view-tomorrow-btn').addEventListener('click', () => {
+  document.getElementById('view-tomorrow-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
     viewDate = 'tomorrow';
     document.getElementById('view-tomorrow-btn').classList.add('active');
     document.getElementById('view-today-btn').classList.remove('active');
@@ -441,7 +443,8 @@ async function init() {
   const notifToggle = document.getElementById('notifications-toggle');
   const { notificationsEnabled } = await browser.storage.local.get('notificationsEnabled');
   notifToggle.checked = notificationsEnabled !== false;
-  notifToggle.addEventListener('change', () => {
+  notifToggle.addEventListener('change', (e) => {
+    e.stopPropagation();
     browser.storage.local.set({ notificationsEnabled: notifToggle.checked });
   });
 
