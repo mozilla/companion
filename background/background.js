@@ -19,6 +19,8 @@ function isHappeningToday(startDate, endDate) {
   return start < todayEnd && end >= todayStart;
 }
 
+const notificationActions = new Map();
+
 async function maybeNotify() {
   const { notificationsEnabled } = await browser.storage.local.get('notificationsEnabled');
   if (notificationsEnabled === false) return;
@@ -27,9 +29,26 @@ async function maybeNotify() {
   if (!notificationSchedule) return;
   const toNotify = notificationSchedule.get(key);
   if (toNotify && toNotify.length > 0) {
-    toNotify.forEach(notif => browser.notifications.create({ type: 'basic', iconUrl: browser.runtime.getURL('icon48.png'), ...notif }));
+    toNotify.forEach(notif => {
+      const { actionUrl, ...notifData } = notif;
+      const id = `companion-${Date.now()}-${Math.random()}`;
+      if (actionUrl) notificationActions.set(id, actionUrl);
+      browser.notifications.create(id, { type: 'basic', iconUrl: browser.runtime.getURL('icon48.png'), ...notifData });
+    });
   }
 }
+
+browser.notifications.onClicked.addListener(id => {
+  const url = notificationActions.get(id);
+  if (url) {
+    browser.tabs.create({ url });
+    notificationActions.delete(id);
+  }
+});
+
+browser.notifications.onClosed.addListener(id => {
+  notificationActions.delete(id);
+});
 
 async function updateNotificationSchedule(events) {
   if (!events) return;
@@ -39,14 +58,15 @@ async function updateNotificationSchedule(events) {
     .forEach(event => {
       const startDate = new Date(event.startDate);
       const key = formatTime24(startDate);
+      const actionUrl = event.conference?.url || event.url;
       const scheduledNotifications = newSchedule.get(key) || [];
-      scheduledNotifications.push({ title: event.summary, message: 'Starting now' });
+      scheduledNotifications.push({ title: event.summary, message: 'Starting now', actionUrl });
       newSchedule.set(key, scheduledNotifications);
 
       const tenMinBefore = new Date(startDate.getTime() - 10 * 60 * 1000);
       const tenMinKey = formatTime24(tenMinBefore);
       const schdn = newSchedule.get(tenMinKey) || [];
-      schdn.push({ title: event.summary, message: 'Starting soon' });
+      schdn.push({ title: event.summary, message: 'Starting soon', actionUrl });
       newSchedule.set(tenMinKey, schdn);
     });
   browser.storage.local.set({ notificationSchedule: newSchedule });
