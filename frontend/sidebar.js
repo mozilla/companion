@@ -315,12 +315,12 @@ function renderCalendar() {
 
       const title = document.createElement('div');
       title.className = 'empty-title';
-      title.textContent = 'You\'re free for the rest of the day';
+      title.textContent = viewDate === 'tomorrow' ? `Nothing on ${getNextDayLabel()}` : 'You\'re free for the rest of the day';
       empty.appendChild(title);
 
       const subtitle = document.createElement('div');
       subtitle.className = 'empty-subtitle';
-      subtitle.textContent = 'No more meetings today';
+      subtitle.textContent = viewDate === 'tomorrow' ? 'No meetings scheduled' : 'No more meetings today';
       empty.appendChild(subtitle);
     }
 
@@ -328,21 +328,35 @@ function renderCalendar() {
     return;
   }
 
-  // Hero: most imminent event
-  container.appendChild(createHeroCard(upcoming[0]));
-
-  // Later today
-  if (upcoming.length > 1) {
+  if (viewDate === 'tomorrow') {
+    // Flat list for tomorrow — no urgency, no hero card
     const section = document.createElement('div');
     section.className = 'later-section';
 
     const label = document.createElement('div');
     label.className = 'section-label';
-    label.textContent = 'Later today';
+    label.textContent = getNextDayLabel();
     section.appendChild(label);
 
-    upcoming.slice(1).forEach(event => section.appendChild(createCompactEvent(event)));
+    upcoming.forEach(event => section.appendChild(createCompactEvent(event)));
     container.appendChild(section);
+  } else {
+    // Hero: most imminent event
+    container.appendChild(createHeroCard(upcoming[0]));
+
+    // Later today
+    if (upcoming.length > 1) {
+      const section = document.createElement('div');
+      section.className = 'later-section';
+
+      const label = document.createElement('div');
+      label.className = 'section-label';
+      label.textContent = 'Later today';
+      section.appendChild(label);
+
+      upcoming.slice(1).forEach(event => section.appendChild(createCompactEvent(event)));
+      container.appendChild(section);
+    }
   }
 
   // Loading spinner
