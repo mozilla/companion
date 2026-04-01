@@ -1,30 +1,262 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" type="text/css" href="vars.css" />
-    <link rel="stylesheet" type="text/css" href="global.css" />
+    <link rel="stylesheet" type="text/css" href="public/vars.css" />
+    <link rel="stylesheet" type="text/css" href="public/global.css" />
+    <style>
+      /* Card */
+      .card {
+        box-shadow: 0 2px 6px 0 rgba(58, 57, 68, 0.2);
+        padding: 0;
+        margin: 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        background-color: var(--card-background);
+      }
+
+      /* Now / Today toggle */
+      .button-group {
+        background-color: var(--card-background-transparent);
+        padding: 5px;
+        display: flex;
+        justify-content: stretch;
+      }
+      .button-group button {
+        border: none;
+        box-shadow: none;
+        border-radius: 18px;
+        display: block;
+        flex-grow: 1;
+        font-size: 1rem;
+        padding: 5px;
+        background-color: transparent;
+        cursor: pointer;
+        color: var(--button-text);
+      }
+      .button-group button:disabled {
+        background-color: var(--card-background);
+      }
+      .button-group button:enabled:hover {
+        background-color: var(--card-background-transparent);
+      }
+      .flex-spacer { width: 5px; }
+
+      /* Event list */
+      .event-placeholder {
+        padding: 5px;
+        text-align: center;
+      }
+      .calendar-event {
+        border-bottom: 1px solid var(--event-separator-color);
+        padding: 10px;
+      }
+      .event-header-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .event-header {
+        margin: 0.5rem 0;
+        overflow: hidden;
+      }
+      .event-header > * { display: block; }
+      .event-title {
+        margin: 0;
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .event-view-toggle {
+        border-radius: 50%;
+        margin-left: 5px;
+        cursor: pointer;
+        width: 20px;
+        height: 20px;
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        background: none;
+        flex-shrink: 0;
+      }
+      .event-view-toggle > img { width: 100%; height: 100%; }
+
+      /* Conference join button */
+      .join-meeting-link {
+        display: block;
+        background-color: rgb(132, 91, 220);
+        border-radius: 4px;
+        color: rgb(251, 251, 254);
+        cursor: pointer;
+        font-family: 'Inter', system-ui;
+        font-size: 12.1875px;
+        font-weight: 600;
+        margin: 12px 0 4px;
+        padding: 7px 15px;
+        text-align: center;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .join-meeting-link img {
+        vertical-align: bottom;
+        height: 16px;
+        width: 16px;
+      }
+
+      /* Links */
+      .event-links {
+        list-style: none;
+        display: flex;
+        flex-flow: row wrap;
+        margin: 0;
+        padding: 1rem 0 0.5rem 0;
+        cursor: pointer;
+      }
+      .event-links li {
+        background-color: var(--button-bg);
+        border-radius: 16px;
+        padding: 4px 8px;
+        font-size: 1rem;
+        line-height: 1;
+        max-width: 10em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .event-links a { text-decoration: none; }
+
+      /* Expanded actions */
+      .event-actions {
+        display: flex;
+        padding-top: 1rem;
+        justify-content: center;
+      }
+      .action-button {
+        appearance: none;
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        max-width: 62px;
+        cursor: pointer;
+        color: black;
+      }
+      .action-button-icon-container {
+        box-sizing: border-box;
+        height: 32px;
+        width: 32px;
+        border-radius: 100px;
+        background-color: var(--button-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 0.5px solid transparent;
+      }
+      .action-button:hover > .action-button-icon-container {
+        border-color: var(--text-color-light);
+      }
+      .action-button-icon {
+        width: 15px;
+        height: auto;
+        -moz-context-properties: fill;
+        fill: var(--button-text);
+      }
+      .action-button-label {
+        margin-block-start: 6px;
+        font-size: 0.8rem;
+        text-align: center;
+        color: var(--text-color-light);
+      }
+
+      /* Loading spinner */
+      .status-indicator {
+        position: fixed;
+        bottom: 0;
+        padding: 10px 0;
+        width: 100%;
+        display: flex;
+        place-content: center;
+      }
+      .loading-spinner {
+        border: 3px solid #fbb57f;
+        border-radius: 50%;
+        width: 12px;
+        height: 12px;
+        border-right-color: transparent;
+        animation: rotateCW 1s linear infinite;
+        display: inline-block;
+      }
+      @keyframes rotateCW {
+        from { transform: rotateZ(0deg); }
+        to { transform: rotateZ(360deg); }
+      }
+
+      /* Login card */
+      #login-view .card {
+        padding-inline: 16px;
+        padding-block: 12px;
+        margin: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-sizing: border-box;
+      }
+      .notification-icon-container {
+        height: 32px;
+        width: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .notification-icon { width: 20px; height: 20px; }
+      .notification-content { flex-grow: 1; }
+      .notification-heading { margin: 0 0 4px 0; }
+      .notification-description {
+        color: var(--text-color-light);
+        margin: 0;
+      }
+
+      /* Disconnect button */
+      #disconnect-section {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        padding-bottom: 10px;
+      }
+    </style>
   </head>
   <body>
-    <connectable-service-router type="google">
-      <connect-service-notification
-        slot="login"
-        type="google"
-      ></connect-service-notification>
-      <calendar-widget slot="run"></calendar-widget>
-      <div slot="disconnect"></div>
-    </connectable-service-router>
+    <!-- Login view -->
+    <div id="login-view" style="display:none">
+      <div class="card">
+        <div class="notification-icon-container">
+          <img class="notification-icon" src="public/googleAccount.png" />
+        </div>
+        <div class="notification-content">
+          <h2 class="notification-heading" id="service-name"></h2>
+          <p class="notification-description" id="service-description"></p>
+        </div>
+        <div>
+          <button id="connect-btn"></button>
+        </div>
+      </div>
+    </div>
 
-    <script
-      type="module"
-      src="src/frontend/ConnectableServiceRouter.ts"
-    ></script>
-    <script
-      type="module"
-      src="src/frontend/ConnectServiceNotification.ts"
-    ></script>
-    <script
-      type="module"
-      src="src/frontend/calendar/CalendarWidget.ts"
-    ></script>
+    <!-- Calendar view -->
+    <div id="calendar-view" style="display:none"></div>
+
+    <!-- Disconnect button (shown when connected) -->
+    <div id="disconnect-section" style="display:none">
+      <button id="disconnect-btn"></button>
+    </div>
+
+    <script type="module" src="frontend/sidebar.js"></script>
   </body>
 </html>

@@ -27,3 +27,6 @@ web-ext-artifacts
 
 # environment configuration
 .env
+
+# local secrets (use background/secrets.js.template as reference)
+background/secrets.js

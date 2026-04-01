@@ -15,7 +15,7 @@
   },
   "sidebar_action": {
     "default_title": "Companion",
-    "default_panel": "dist/index.html",
+    "default_panel": "index.html",
     "default_icon": "icon48.png"
   },
   "commands": {
@@ -26,10 +26,10 @@
     }
   },
   "background": {
-    "page": "dist/background.html"
+    "page": "background.html"
   },
   "options_ui": {
-    "page": "dist/options.html",
+    "page": "options.html",
     "browser_style": true
   },
   "browser_specific_settings": {
