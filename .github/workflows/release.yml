@@ -40,8 +40,9 @@ jobs:
             --timeout=900000
 
       - name: release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }}
-          files: web-ext-artifacts/companion-v${{ steps.version.outputs.version }}.xpi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v${{ steps.version.outputs.version }} \
+            --title "v${{ steps.version.outputs.version }}" \
+            web-ext-artifacts/companion-v${{ steps.version.outputs.version }}.xpi
