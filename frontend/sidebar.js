@@ -483,8 +483,7 @@ async function init() {
     browser.i18n.getMessage('service-labels.google');
   document.getElementById('connect-btn').textContent =
     browser.i18n.getMessage('connect');
-  document.getElementById('disconnect-btn').textContent =
-    browser.i18n.getMessage('disconnect');
+
 
   // Connect button
   document.getElementById('connect-btn').addEventListener('click', () => {
@@ -543,12 +542,6 @@ async function init() {
     renderRecentDocs();
   });
 
-  // Disconnect button
-  document.getElementById('disconnect-btn').addEventListener('click', () => {
-    document.getElementById('settings-popup').style.display = 'none';
-    browser.runtime.sendMessage({ command: 'signout', service: 'google' });
-  });
-
   // Initial connection check
   const result = await browser.storage.local.get('onlineservices.config');
   const config = result['onlineservices.config'];
@@ -583,7 +576,23 @@ async function init() {
   browser.alarms.onAlarm.addListener(alarm => {
     if (alarm.name === 'sidebar-clock') {
       now = new Date();
-      renderCalendar();
+      // Only update the status badge in-place to avoid flashing
+      const card = document.querySelector('.hero-card');
+      if (card) {
+        const upcoming = getUpcomingEvents();
+        if (upcoming.length > 0) {
+          const status = getEventStatus(upcoming[0]);
+          const newType = `status-${status.type}`;
+          // Update card class
+          card.className = `hero-card ${newType}`;
+          // Update badge text
+          const badge = card.querySelector('.status-badge');
+          if (badge) badge.textContent = status.label;
+        }
+      } else {
+        // No hero card visible — full render needed (e.g. new event became current)
+        renderCalendar();
+      }
     }
   });
 }
