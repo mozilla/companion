@@ -520,6 +520,17 @@ async function init() {
   });
 
   // Refresh button
+  document.getElementById('gmail-btn').addEventListener('click', () => {
+    browser.tabs.query({ url: '*://mail.google.com/*' }).then(tabs => {
+      if (tabs.length && tabs[0].id) {
+        browser.tabs.update(tabs[0].id, { active: true });
+        browser.windows.update(tabs[0].windowId, { focused: true });
+      } else {
+        window.open('https://mail.google.com/');
+      }
+    });
+  });
+
   document.getElementById('refresh-btn').addEventListener('click', () => {
     browser.runtime.sendMessage({ command: 'refresh' });
   });
