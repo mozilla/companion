@@ -396,11 +396,9 @@ function renderRecentDocs() {
   const toggle = document.getElementById('recent-docs-toggle');
   if (!recentDocs.length || (toggle && !toggle.checked)) {
     container.style.display = 'none';
-    document.getElementById('calendar-view').style.paddingBottom = '0';
     return;
   }
   container.style.display = 'block';
-  document.getElementById('calendar-view').style.paddingBottom = '200px';
 
   const section = document.createElement('div');
   section.className = 'later-section';

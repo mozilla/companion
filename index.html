@@ -335,14 +335,10 @@
 
       /* ── Recent docs ── */
       #recent-docs-view {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        flex-shrink: 0;
         background: color-mix(in srgb, Canvas 100%, CanvasText 4%);
         border-top: 1px solid var(--card-border);
         padding: 4px 0 48px;
-        z-index: 40;
       }
       .doc-row {
         display: flex;
@@ -394,6 +390,13 @@
       /* ── Login view ── */
       #login-view {
         padding: 12px;
+        flex: 1;
+      }
+
+      #calendar-view {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
       }
       .connect-card {
         border: 1px solid var(--card-border);
