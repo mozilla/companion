@@ -136,10 +136,16 @@ function createHeroCard(event) {
   card.appendChild(badge);
 
   // Title (clicks to open in calendar)
-  const title = document.createElement('h2');
+  const title = document.createElement('a');
   title.className = 'hero-title';
+  title.href = event.url;
+  title.style.textDecoration = 'none';
+  title.style.color = 'inherit';
   title.textContent = event.summary;
-  title.addEventListener('click', () => openInCalendarTab(event.url));
+  title.addEventListener('click', e => {
+    e.preventDefault();
+    openInCalendarTab(event.url);
+  });
   card.appendChild(title);
 
   // Time range
@@ -152,7 +158,8 @@ function createHeroCard(event) {
   if (event.conference) {
     const joinBtn = document.createElement('a');
     joinBtn.className = 'join-btn';
-    joinBtn.href = '#';
+    joinBtn.href = event.conference.url;
+    joinBtn.target = '_blank';
     joinBtn.addEventListener('click', e => {
       e.preventDefault();
       openUrl(event.conference.url);
@@ -231,7 +238,8 @@ function createHeroCard(event) {
     event.attachments.forEach(attachment => {
       const link = document.createElement('a');
       link.className = 'hero-link-chip';
-      link.href = '#';
+      link.href = attachment.url;
+      link.target = '_blank';
       link.title = attachment.url;
       link.textContent = attachment.text || new URL(attachment.url).host;
       link.addEventListener('click', e => {
@@ -249,10 +257,16 @@ function createHeroCard(event) {
 }
 
 function createCompactEvent(event) {
-  const item = document.createElement('div');
+  const item = document.createElement('a');
   item.className = 'compact-event';
+  item.href = event.url;
   item.style.cursor = 'pointer';
-  item.addEventListener('click', () => openInCalendarTab(event.url));
+  item.style.textDecoration = 'none';
+  item.style.color = 'inherit';
+  item.addEventListener('click', e => {
+    e.preventDefault();
+    openInCalendarTab(event.url);
+  });
 
   const time = document.createElement('span');
   time.className = 'compact-time';
@@ -267,7 +281,8 @@ function createCompactEvent(event) {
   if (event.conference) {
     const joinLink = document.createElement('a');
     joinLink.className = 'compact-join';
-    joinLink.href = '#';
+    joinLink.href = event.conference.url;
+    joinLink.target = '_blank';
     joinLink.title = `Join ${event.conference.name}`;
     joinLink.addEventListener('click', e => {
       e.preventDefault();
