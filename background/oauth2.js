@@ -107,20 +107,36 @@ export class OAuth2 {
   }
   async connect() {
     let params = new URLSearchParams({
-        client_id: this.clientId,
-        response_type: 'code',
-        access_type: 'offline',
-        prompt: 'select_account',
-        redirect_uri: this.redirectionEndpoint,
-        scope: this.scope.join(' '),
-      });
-      let responseUrl = await browser.identity.launchWebAuthFlow({ url: `${this.authorizationEndpoint}?${params.toString()}`, interactive: true });
-      const url = new URL(responseUrl);
-      const urlParams = new URLSearchParams(url.search.slice(1));
-      let result = Object.fromEntries(urlParams.entries());
-      let code = result.code;
-      let accessToken = await this.requestAccessToken(code);
-      return accessToken;
+      client_id: this.clientId,
+      response_type: 'code',
+      access_type: 'offline',
+      prompt: 'select_account',
+      redirect_uri: this.redirectionEndpoint,
+      scope: this.scope.join(' '),
+    });
+
+    const authUrl = `${this.authorizationEndpoint}?${params.toString()}`;
+    const redirectBase = this.redirectionEndpoint;
+
+    await browser.tabs.create({ url: authUrl });
+
+    const responseUrl = await new Promise((resolve, reject) => {
+      const onTabUpdated = (tabId, changeInfo) => {
+        if (!changeInfo.url || !changeInfo.url.startsWith(redirectBase)) {
+          return;
+        }
+        browser.tabs.onUpdated.removeListener(onTabUpdated);
+        browser.tabs.remove(tabId).catch(() => {});
+        resolve(changeInfo.url);
+      };
+
+      browser.tabs.onUpdated.addListener(onTabUpdated, { properties: ['url'] });
+    });
+
+    const url = new URL(responseUrl);
+    const urlParams = new URLSearchParams(url.search.slice(1));
+    const result = Object.fromEntries(urlParams.entries());
+    return this.requestAccessToken(result.code);
   }
 
 
