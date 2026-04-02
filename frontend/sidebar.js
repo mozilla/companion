@@ -602,8 +602,8 @@ async function init() {
           const badge = card.querySelector('.status-badge');
           if (badge) badge.textContent = status.label;
         }
-      } else {
-        // No hero card visible — full render needed (e.g. new event became current)
+      } else if (viewDate === 'today') {
+        // No hero card yet — a new event may have become current
         renderCalendar();
       }
     }
