@@ -56,6 +56,19 @@ function openUrl(url) {
   });
 }
 
+function openDocUrl(url) {
+  const basePath = url.split('?')[0].split('#')[0];
+  browser.tabs.query({ url: '*://*.google.com/*' }).then(tabs => {
+    const match = tabs.find(tab => tab.url && tab.url.split('?')[0].split('#')[0] === basePath);
+    if (match) {
+      browser.tabs.update(match.id, { active: true });
+      browser.windows.update(match.windowId, { focused: true });
+    } else {
+      window.open(url);
+    }
+  });
+}
+
 function openInCalendarTab(url) {
   browser.tabs.query({ url: '*://calendar.google.com/*' }).then(tabs => {
     if (tabs.length && tabs[0].id) {
@@ -245,7 +258,7 @@ function createHeroCard(event) {
       link.textContent = attachment.text || new URL(attachment.url).host;
       link.addEventListener('click', e => {
         e.preventDefault();
-        openUrl(attachment.url);
+        openDocUrl(attachment.url);
       });
       docsSection.appendChild(link);
     });
@@ -415,7 +428,7 @@ function renderRecentDocs() {
     row.target = '_blank';
     row.addEventListener('click', e => {
       e.preventDefault();
-      openUrl(doc.url);
+      openDocUrl(doc.url);
     });
 
     if (doc.iconUrl) {
