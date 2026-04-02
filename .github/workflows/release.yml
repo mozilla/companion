@@ -9,6 +9,8 @@ on:
 jobs:
   build_release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -36,11 +38,25 @@ jobs:
             --api-secret=${{ secrets.AMO_JWT_SECRET }} \
             --timeout=900000
 
+      - name: update updates.json
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          SIGNED_XPI=$(ls web-ext-artifacts/*.xpi | head -1)
+          mv "$SIGNED_XPI" "web-ext-artifacts/companion-v${VERSION}.xpi"
+          UPDATE_LINK="https://github.com/mozilla/companion/releases/download/v${VERSION}/companion-v${VERSION}.xpi"
+          jq --arg version "$VERSION" --arg url "$UPDATE_LINK" \
+            '.addons["companion@mozilla-internal"].updates = [{"version": $version, "update_link": $url}]' \
+            updates.json > updates.tmp.json && mv updates.tmp.json updates.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add updates.json
+          git commit -m "Update updates.json for v${VERSION}"
+          git push
+
       - name: release
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          SIGNED_XPI=$(ls web-ext-artifacts/*.xpi | head -1)
           gh release create v${{ steps.version.outputs.version }} \
             --title "v${{ steps.version.outputs.version }}" \
-            "${SIGNED_XPI}#companion-v${{ steps.version.outputs.version }}.xpi"
+            "web-ext-artifacts/companion-v${{ steps.version.outputs.version }}.xpi"
