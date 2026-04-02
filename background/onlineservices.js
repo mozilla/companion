@@ -186,6 +186,33 @@ class GoogleService {
     })
   }
 
+  async getRecentDocs() {
+    const token = await this.getToken();
+    if (!token) return [];
+
+    const apiTarget = new URL('https://www.googleapis.com/drive/v3/files');
+    apiTarget.searchParams.set('orderBy', 'viewedByMeTime desc');
+    apiTarget.searchParams.set('pageSize', '5');
+    apiTarget.searchParams.set('fields', 'files(id,name,webViewLink,iconLink,mimeType)');
+
+    let response;
+    try {
+      response = await fetch(apiTarget, { headers: { Authorization: `Bearer ${token}` } });
+    } catch (ex) {
+      return [];
+    }
+
+    const results = await response.json();
+    if (!response.ok) return [];
+
+    return results.files.map(f => ({
+      name: f.name,
+      url: f.webViewLink,
+      iconUrl: f.iconLink,
+      mimeType: f.mimeType,
+    }));
+  }
+
   toJSON() {
     return {
       type: this.app,
@@ -259,12 +286,19 @@ export const OnlineServices = {
     }
     this.alreadyFetching = true
 
-    let meetingResults = servicesData.map(service => service.getNextMeetings())
-    let eventResults = await Promise.allSettled(meetingResults)
+    let [eventResults, docResults] = await Promise.all([
+      Promise.allSettled(servicesData.map(service => service.getNextMeetings())),
+      Promise.allSettled(servicesData.map(service => service.getRecentDocs())),
+    ]);
 
     if (eventResults.some((r) => r.value != null)) {
       let events = eventResults.flatMap((r) => r.value || [])
       browser.storage.local.set({ events })
+    }
+
+    const recentDocs = docResults.flatMap((r) => r.value || []);
+    if (recentDocs.length) {
+      browser.storage.local.set({ recentDocs });
     }
 
     this.alreadyFetching = false

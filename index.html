@@ -332,6 +332,41 @@
         font-size: 12px;
       }
 
+      /* ── Recent docs ── */
+      #recent-docs-view {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: color-mix(in srgb, Canvas 100%, CanvasText 4%);
+        border-top: 1px solid var(--card-border);
+        padding-bottom: 48px;
+        z-index: 40;
+      }
+      .doc-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 4px;
+        border-top: 1px solid var(--event-separator-color);
+        text-decoration: none;
+        color: var(--text-color);
+        border-radius: calc(var(--border-radius) - 2px);
+      }
+      .doc-row:hover { background: var(--event-separator-color); }
+      .doc-icon {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .doc-name {
+        font-size: 13px;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
       /* ── Loading spinner ── */
       .status-indicator {
         position: fixed;
@@ -412,6 +447,10 @@
               <span>Notifications</span>
               <input type="checkbox" id="notifications-toggle" checked />
             </label>
+            <label class="popup-toggle-row">
+              <span>Recent Documents</span>
+              <input type="checkbox" id="recent-docs-toggle" checked />
+            </label>
             <button id="disconnect-btn"></button>
           </div>
           <button id="settings-btn" class="footer-btn" title="Settings">
@@ -435,6 +474,9 @@
 
     <!-- Calendar view -->
     <div id="calendar-view" style="display:none"></div>
+
+    <!-- Recent docs -->
+    <div id="recent-docs-view"></div>
 
     <script type="module" src="frontend/sidebar.js"></script>
   </body>

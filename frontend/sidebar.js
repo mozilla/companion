@@ -3,6 +3,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 let events = [];
+let recentDocs = [];
 let now = new Date();
 let backendStatus = 'idle';
 let viewDate = 'today'; // 'today' | 'tomorrow'
@@ -388,6 +389,56 @@ function renderCalendar() {
   }
 }
 
+function renderRecentDocs() {
+  const container = document.getElementById('recent-docs-view');
+  if (!container) return;
+  container.innerHTML = '';
+  const toggle = document.getElementById('recent-docs-toggle');
+  if (!recentDocs.length || (toggle && !toggle.checked)) {
+    container.style.display = 'none';
+    document.getElementById('calendar-view').style.paddingBottom = '0';
+    return;
+  }
+  container.style.display = 'block';
+  document.getElementById('calendar-view').style.paddingBottom = '200px';
+
+  const section = document.createElement('div');
+  section.className = 'later-section';
+
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.textContent = 'Recent Documents';
+  section.appendChild(label);
+
+  recentDocs.forEach(doc => {
+    const row = document.createElement('a');
+    row.className = 'doc-row';
+    row.href = doc.url;
+    row.target = '_blank';
+    row.addEventListener('click', e => {
+      e.preventDefault();
+      openUrl(doc.url);
+    });
+
+    if (doc.iconUrl) {
+      const icon = document.createElement('img');
+      icon.className = 'doc-icon';
+      icon.src = doc.iconUrl;
+      icon.alt = '';
+      row.appendChild(icon);
+    }
+
+    const name = document.createElement('span');
+    name.className = 'doc-name';
+    name.textContent = doc.name;
+    row.appendChild(name);
+
+    section.appendChild(row);
+  });
+
+  container.appendChild(section);
+}
+
 // ── View management ───────────────────────────────────────────────────────────
 
 function showLoginView() {
@@ -395,6 +446,7 @@ function showLoginView() {
   document.getElementById('settings-popup').style.display = 'none';
   document.getElementById('login-view').style.display = 'block';
   document.getElementById('calendar-view').style.display = 'none';
+  document.getElementById('recent-docs-view').style.display = 'none';
 }
 
 function showCalendarView() {
@@ -405,12 +457,14 @@ function showCalendarView() {
 }
 
 async function syncStorage() {
-  const [eventData, statusData] = await Promise.all([
+  const [eventData, statusData, docsData] = await Promise.all([
     browser.storage.local.get('events'),
     browser.storage.local.get('status'),
+    browser.storage.local.get('recentDocs'),
   ]);
   events = eventData.events || [];
   backendStatus = statusData.status || 'idle';
+  recentDocs = docsData.recentDocs || [];
 
   const refreshIcon = document.querySelector('#refresh-btn img');
   if (refreshIcon) {
@@ -418,6 +472,7 @@ async function syncStorage() {
   }
 
   renderCalendar();
+  renderRecentDocs();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -480,6 +535,16 @@ async function init() {
     browser.storage.local.set({ notificationsEnabled: notifToggle.checked });
   });
 
+  // Recent docs toggle
+  const recentDocsToggle = document.getElementById('recent-docs-toggle');
+  const { recentDocsEnabled } = await browser.storage.local.get('recentDocsEnabled');
+  recentDocsToggle.checked = recentDocsEnabled !== false;
+  recentDocsToggle.addEventListener('change', (e) => {
+    e.stopPropagation();
+    browser.storage.local.set({ recentDocsEnabled: recentDocsToggle.checked });
+    renderRecentDocs();
+  });
+
   // Disconnect button
   document.getElementById('disconnect-btn').addEventListener('click', () => {
     document.getElementById('settings-popup').style.display = 'none';
@@ -510,7 +575,7 @@ async function init() {
         showLoginView();
       }
     }
-    if ('events' in changes || 'status' in changes) {
+    if ('events' in changes || 'status' in changes || 'recentDocs' in changes) {
       syncStorage();
     }
   });
