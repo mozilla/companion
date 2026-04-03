@@ -3,8 +3,8 @@
     "companion@mozilla-internal": {
       "updates": [
         {
-          "version": "0.8",
-          "update_link": "https://github.com/mozilla/companion/releases/download/v0.8/companion-v0.8.xpi"
+          "version": "0.9",
+          "update_link": "https://github.com/mozilla/companion/releases/download/v0.9/companion-v0.9.xpi"
         }
       ]
     }
