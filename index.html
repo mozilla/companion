@@ -364,9 +364,21 @@
         height: 16px;
         flex-shrink: 0;
       }
+      .doc-info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
       .doc-name {
         font-size: 13px;
-        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .doc-context {
+        font-size: 11px;
+        color: var(--text-color-secondary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;

@@ -254,8 +254,17 @@ function createHeroCard(event) {
       link.className = 'hero-link-chip';
       link.href = attachment.url;
       link.target = '_blank';
-      link.title = attachment.url;
-      link.textContent = attachment.text || new URL(attachment.url).host;
+      link.title = attachment.text || attachment.url;
+      if (attachment.iconUrl) {
+        const icon = document.createElement('img');
+        icon.src = attachment.iconUrl;
+        icon.width = 14;
+        icon.height = 14;
+        icon.style.verticalAlign = 'middle';
+        icon.style.marginRight = '4px';
+        link.appendChild(icon);
+      }
+      link.appendChild(document.createTextNode(attachment.text || new URL(attachment.url).host));
       link.addEventListener('click', e => {
         e.preventDefault();
         openDocUrl(attachment.url);
@@ -402,6 +411,29 @@ function renderCalendar() {
   }
 }
 
+function docContext(doc) {
+  function relativeTime(dateStr) {
+    const days = Math.floor((Date.now() - new Date(dateStr)) / 86400000);
+    if (days === 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} week${Math.floor(days / 7) > 1 ? 's' : ''} ago`;
+    return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? 's' : ''} ago`;
+  }
+  if (doc.sharedWithMeTime) {
+    const who = doc.sharingUser?.displayName;
+    return who ? `Shared by ${who} · ${relativeTime(doc.sharedWithMeTime)}` : `Shared · ${relativeTime(doc.sharedWithMeTime)}`;
+  }
+  if (doc.lastModifyingUser) {
+    const time = relativeTime(doc.modifiedTime);
+    return doc.lastModifyingUser.me ? `You modified · ${time}` : `Modified by ${doc.lastModifyingUser.displayName} · ${time}`;
+  }
+  if (doc.viewedByMeTime) {
+    return `You opened · ${relativeTime(doc.viewedByMeTime)}`;
+  }
+  return null;
+}
+
 function renderRecentDocs() {
   const container = document.getElementById('recent-docs-view');
   if (!container) return;
@@ -441,11 +473,23 @@ function renderRecentDocs() {
       row.appendChild(icon);
     }
 
+    const info = document.createElement('div');
+    info.className = 'doc-info';
+
     const name = document.createElement('span');
     name.className = 'doc-name';
     name.textContent = doc.name;
-    row.appendChild(name);
+    info.appendChild(name);
 
+    const context = docContext(doc);
+    if (context) {
+      const sub = document.createElement('span');
+      sub.className = 'doc-context';
+      sub.textContent = context;
+      info.appendChild(sub);
+    }
+
+    row.appendChild(info);
     section.appendChild(row);
   });
 

@@ -104,6 +104,7 @@ function getAttachmentInfo(data) {
     for (const item of data) {
       let attachment = processLink(item.fileUrl, item.title);
       if (attachment?.text && !attachments.has(attachment.url)) {
+        attachment.iconUrl = item.iconLink;
         attachments.set(attachment.url, attachment);
       }
     }

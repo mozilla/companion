@@ -193,7 +193,7 @@ class GoogleService {
     const apiTarget = new URL('https://www.googleapis.com/drive/v3/files');
     apiTarget.searchParams.set('orderBy', 'viewedByMeTime desc');
     apiTarget.searchParams.set('pageSize', '5');
-    apiTarget.searchParams.set('fields', 'files(id,name,webViewLink,iconLink,mimeType)');
+    apiTarget.searchParams.set('fields', 'files(id,name,webViewLink,iconLink,mimeType,viewedByMeTime,modifiedTime,lastModifyingUser(displayName,me),sharedWithMeTime,sharingUser(displayName))');
 
     let response;
     try {
@@ -210,6 +210,11 @@ class GoogleService {
       url: f.webViewLink,
       iconUrl: f.iconLink,
       mimeType: f.mimeType,
+      viewedByMeTime: f.viewedByMeTime,
+      modifiedTime: f.modifiedTime,
+      lastModifyingUser: f.lastModifyingUser,
+      sharedWithMeTime: f.sharedWithMeTime,
+      sharingUser: f.sharingUser,
     }));
   }
 
