@@ -589,8 +589,11 @@ async function init() {
     popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
   });
 
-  // Close popup when clicking outside
+  // Close popup when clicking outside or when sidebar loses focus
   document.addEventListener('click', () => {
+    document.getElementById('settings-popup').style.display = 'none';
+  });
+  window.addEventListener('blur', () => {
     document.getElementById('settings-popup').style.display = 'none';
   });
 
