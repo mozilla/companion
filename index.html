@@ -7,18 +7,21 @@
     <style>
       /* ── Footer ── */
       #footer {
-        position: fixed;
-        bottom: 0;
-        right: 0;
+        flex-shrink: 0;
         padding: 8px;
-        pointer-events: none;
-        z-index: 50;
+        display: flex;
+        align-items: center;
+      }
+      #footer-left {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
       }
       #footer-right {
         display: flex;
         align-items: center;
         gap: 4px;
-        pointer-events: all;
       }
       .footer-btn {
         background: var(--button-bg);
@@ -32,6 +35,22 @@
         box-shadow: 0 1px 4px rgba(0,0,0,0.15);
       }
       .footer-btn:hover { filter: brightness(0.95); }
+      #new-doc-btn, #new-sheet-btn, #new-slide-btn { position: relative; }
+      .new-badge {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        font-size: 9px;
+        font-weight: bold;
+        color: white;
+        background: #1a73e8;
+        border-radius: 50%;
+        width: 11px;
+        height: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
       .footer-btn img {
         width: 14px;
         height: 14px;
@@ -253,6 +272,7 @@
         letter-spacing: 0.08em;
         color: var(--text-color-secondary);
         padding: 4px 0 6px;
+        text-decoration: none;
       }
       .compact-event {
         display: flex;
@@ -325,7 +345,7 @@
         flex-shrink: 0;
         background: color-mix(in srgb, Canvas 100%, CanvasText 4%);
         border-top: 1px solid var(--card-border);
-        padding: 4px 0 48px;
+        padding: 4px 0;
       }
       .doc-row {
         display: flex;
@@ -351,30 +371,7 @@
         text-overflow: ellipsis;
       }
 
-      /* ── Loading spinner ── */
-      .status-indicator {
-        position: fixed;
-        bottom: 8px;
-        width: 100%;
-        display: flex;
-        place-content: center;
-        pointer-events: none;
-      }
-      .loading-spinner {
-        border: 2px solid var(--event-separator-color);
-        border-radius: 50%;
-        width: 12px;
-        height: 12px;
-        border-top-color: var(--accent-color);
-        animation: rotateCW 0.8s linear infinite;
-        display: inline-block;
-      }
-      @keyframes rotateCW {
-        from { transform: rotateZ(0deg); }
-        to { transform: rotateZ(360deg); }
-      }
-
-      /* ── Login view ── */
+/* ── Login view ── */
       #login-view {
         padding: 12px;
         flex: 1;
@@ -421,12 +418,44 @@
     </style>
   </head>
   <body>
+    <!-- Login view -->
+    <div id="login-view" style="display:none">
+      <div class="connect-card">
+        <img class="connect-icon" src="public/googleAccount.png" />
+        <div class="connect-content">
+          <h2 class="connect-name" id="service-name"></h2>
+          <p class="connect-description" id="service-description"></p>
+        </div>
+        <button id="connect-btn"></button>
+      </div>
+    </div>
+
+    <!-- Calendar view -->
+    <div id="calendar-view" style="display:none"></div>
+
+    <!-- Recent docs -->
+    <div id="recent-docs-view"></div>
+
     <!-- Footer (shown when connected) -->
     <div id="footer" style="display:none">
-      <div id="footer-right">
-        <button id="gmail-btn" class="footer-btn" title="Gmail">
+      <div id="footer-left">
+        <a id="gmail-btn" class="footer-btn" title="Gmail" href="https://mail.google.com/" target="_blank">
           <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" alt="Gmail" />
-        </button>
+        </a>
+        <a id="new-doc-btn" class="footer-btn" title="New Doc" href="https://docs.new/" target="_blank">
+          <img src="https://ssl.gstatic.com/docs/documents/images/kix-favicon-2023q4.ico" alt="New Doc" />
+          <span class="new-badge">+</span>
+        </a>
+        <a id="new-sheet-btn" class="footer-btn" title="New Sheet" href="https://sheets.new/" target="_blank">
+          <img src="https://ssl.gstatic.com/docs/spreadsheets/spreadsheets_2023q4.ico" alt="New Sheet" />
+          <span class="new-badge">+</span>
+        </a>
+        <a id="new-slide-btn" class="footer-btn" title="New Slide" href="https://slides.new/" target="_blank">
+          <img src="https://ssl.gstatic.com/docs/presentations/images/favicon-2023q4.ico" alt="New Slide" />
+          <span class="new-badge">+</span>
+        </a>
+      </div>
+      <div id="footer-right">
         <button id="refresh-btn" class="footer-btn" title="Refresh">
           <img src="chrome://global/skin/icons/reload.svg" alt="Refresh" />
         </button>
@@ -452,24 +481,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Login view -->
-    <div id="login-view" style="display:none">
-      <div class="connect-card">
-        <img class="connect-icon" src="public/googleAccount.png" />
-        <div class="connect-content">
-          <h2 class="connect-name" id="service-name"></h2>
-          <p class="connect-description" id="service-description"></p>
-        </div>
-        <button id="connect-btn"></button>
-      </div>
-    </div>
-
-    <!-- Calendar view -->
-    <div id="calendar-view" style="display:none"></div>
-
-    <!-- Recent docs -->
-    <div id="recent-docs-view"></div>
 
     <script type="module" src="frontend/sidebar.js"></script>
   </body>

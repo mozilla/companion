@@ -416,9 +416,11 @@ function renderRecentDocs() {
   const section = document.createElement('div');
   section.className = 'later-section';
 
-  const label = document.createElement('div');
+  const label = document.createElement('a');
   label.className = 'section-label';
   label.textContent = 'Recent Documents';
+  label.href = 'https://drive.google.com/';
+  label.target = '_blank';
   section.appendChild(label);
 
   recentDocs.forEach(doc => {
@@ -461,7 +463,7 @@ function showLoginView() {
 }
 
 function showCalendarView() {
-  document.getElementById('footer').style.display = 'block';
+  document.getElementById('footer').style.display = 'flex';
   document.getElementById('login-view').style.display = 'none';
   document.getElementById('calendar-view').style.display = 'block';
   renderCalendar();
@@ -519,8 +521,8 @@ async function init() {
     renderCalendar();
   });
 
-  // Refresh button
-  document.getElementById('gmail-btn').addEventListener('click', () => {
+  document.getElementById('gmail-btn').addEventListener('click', (e) => {
+    e.preventDefault();
     browser.tabs.query({ url: '*://mail.google.com/*' }).then(tabs => {
       if (tabs.length && tabs[0].id) {
         browser.tabs.update(tabs[0].id, { active: true });
@@ -531,6 +533,7 @@ async function init() {
     });
   });
 
+  // Refresh button
   document.getElementById('refresh-btn').addEventListener('click', () => {
     browser.runtime.sendMessage({ command: 'refresh' });
   });
