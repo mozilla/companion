@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Companion",
-  "version": "0.8",
+  "version": "0.9",
   "permissions": [
     "notifications",
     "storage",
