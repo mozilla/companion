@@ -359,6 +359,19 @@
         border-radius: calc(var(--border-radius) - 2px);
       }
       .doc-row:hover { background: var(--event-separator-color); }
+      .doc-pin {
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 11px;
+        opacity: 0;
+        padding: 0 2px;
+        line-height: 1;
+      }
+      .doc-pin-active { opacity: 0.6; }
+      .doc-row:hover .doc-pin { opacity: 0.4; }
+      .doc-row:hover .doc-pin-active { opacity: 1; }
       .doc-icon {
         width: 16px;
         height: 16px;

@@ -4,6 +4,7 @@
 
 let events = [];
 let recentDocs = [];
+let pinnedDocs = [];
 let now = new Date();
 let backendStatus = 'idle';
 let viewDate = 'today'; // 'today' | 'tomorrow'
@@ -439,7 +440,9 @@ function renderRecentDocs() {
   if (!container) return;
   container.innerHTML = '';
   const toggle = document.getElementById('recent-docs-toggle');
-  if (!recentDocs.length || (toggle && !toggle.checked)) {
+  const pinnedIds = new Set(pinnedDocs.map(d => d.id));
+  const unpinnedRecent = recentDocs.filter(d => !pinnedIds.has(d.id)).slice(0, 5);
+  if (!pinnedDocs.length && !unpinnedRecent.length || (toggle && !toggle.checked)) {
     container.style.display = 'none';
     return;
   }
@@ -455,7 +458,8 @@ function renderRecentDocs() {
   label.target = '_blank';
   section.appendChild(label);
 
-  recentDocs.forEach(doc => {
+  [...pinnedDocs, ...unpinnedRecent].forEach((doc, index) => {
+    const isPinned = index < pinnedDocs.length;
     const row = document.createElement('a');
     row.className = 'doc-row';
     row.href = doc.url;
@@ -490,6 +494,23 @@ function renderRecentDocs() {
     }
 
     row.appendChild(info);
+
+    const pin = document.createElement('button');
+    pin.className = 'doc-pin' + (isPinned ? ' doc-pin-active' : '');
+    pin.title = isPinned ? 'Unpin' : 'Pin';
+    pin.textContent = '📌';
+    pin.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isPinned) {
+        pinnedDocs = pinnedDocs.filter(d => d.id !== doc.id);
+      } else {
+        pinnedDocs = [...pinnedDocs, doc];
+      }
+      browser.storage.local.set({ pinnedDocs });
+    });
+    row.appendChild(pin);
+
     section.appendChild(row);
   });
 
@@ -530,14 +551,16 @@ function debouncedSync(calendarChanged, docsChanged) {
 }
 
 async function syncStorage(calendarChanged = true, docsChanged = true) {
-  const [eventData, statusData, docsData] = await Promise.all([
+  const [eventData, statusData, docsData, pinnedData] = await Promise.all([
     browser.storage.local.get('events'),
     browser.storage.local.get('status'),
     browser.storage.local.get('recentDocs'),
+    browser.storage.local.get('pinnedDocs'),
   ]);
   events = eventData.events || [];
   backendStatus = statusData.status || 'idle';
   recentDocs = docsData.recentDocs || [];
+  pinnedDocs = pinnedData.pinnedDocs || [];
 
   const refreshIcon = document.querySelector('#refresh-btn img');
   if (refreshIcon) {
@@ -656,9 +679,9 @@ async function init() {
         showLoginView();
       }
     }
-    if ('events' in changes || 'status' in changes || 'recentDocs' in changes) {
+    if ('events' in changes || 'status' in changes || 'recentDocs' in changes || 'pinnedDocs' in changes) {
       const calendarChanged = 'events' in changes || 'status' in changes;
-      const docsChanged = 'recentDocs' in changes;
+      const docsChanged = 'recentDocs' in changes || 'pinnedDocs' in changes;
       debouncedSync(calendarChanged, docsChanged);
     }
   });

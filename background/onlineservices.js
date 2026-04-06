@@ -192,7 +192,7 @@ class GoogleService {
 
     const apiTarget = new URL('https://www.googleapis.com/drive/v3/files');
     apiTarget.searchParams.set('orderBy', 'viewedByMeTime desc');
-    apiTarget.searchParams.set('pageSize', '5');
+    apiTarget.searchParams.set('pageSize', '10');
     apiTarget.searchParams.set('fields', 'files(id,name,webViewLink,iconLink,mimeType,viewedByMeTime,modifiedTime,lastModifyingUser(displayName,me),sharedWithMeTime,sharingUser(displayName))');
 
     let response;
@@ -206,6 +206,7 @@ class GoogleService {
     if (!response.ok) return [];
 
     return results.files.map(f => ({
+      id: f.id,
       name: f.name,
       url: f.webViewLink,
       iconUrl: f.iconLink,
@@ -304,6 +305,14 @@ export const OnlineServices = {
     const recentDocs = docResults.flatMap((r) => r.value || []);
     if (recentDocs.length) {
       browser.storage.local.set({ recentDocs });
+
+      // Update any pinned docs with fresh metadata
+      const { pinnedDocs } = await browser.storage.local.get('pinnedDocs');
+      if (pinnedDocs?.length) {
+        const freshById = new Map(recentDocs.map(d => [d.id, d]));
+        const updated = pinnedDocs.map(d => freshById.get(d.id) || d);
+        browser.storage.local.set({ pinnedDocs: updated });
+      }
     }
 
     this.alreadyFetching = false
