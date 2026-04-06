@@ -513,7 +513,23 @@ function showCalendarView() {
   renderCalendar();
 }
 
-async function syncStorage() {
+let syncDebounce = null;
+
+function debouncedSync(calendarChanged, docsChanged) {
+  if (syncDebounce) {
+    syncDebounce.calendar = syncDebounce.calendar || calendarChanged;
+    syncDebounce.docs = syncDebounce.docs || docsChanged;
+    return;
+  }
+  syncDebounce = { calendar: calendarChanged, docs: docsChanged };
+  setTimeout(async () => {
+    const { calendar, docs } = syncDebounce;
+    syncDebounce = null;
+    await syncStorage(calendar, docs);
+  }, 200);
+}
+
+async function syncStorage(calendarChanged = true, docsChanged = true) {
   const [eventData, statusData, docsData] = await Promise.all([
     browser.storage.local.get('events'),
     browser.storage.local.get('status'),
@@ -528,8 +544,8 @@ async function syncStorage() {
     refreshIcon.classList.toggle('spinning', backendStatus === 'fetching');
   }
 
-  renderCalendar();
-  renderRecentDocs();
+  if (calendarChanged) renderCalendar();
+  if (docsChanged) renderRecentDocs();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -641,7 +657,9 @@ async function init() {
       }
     }
     if ('events' in changes || 'status' in changes || 'recentDocs' in changes) {
-      syncStorage();
+      const calendarChanged = 'events' in changes || 'status' in changes;
+      const docsChanged = 'recentDocs' in changes;
+      debouncedSync(calendarChanged, docsChanged);
     }
   });
 
