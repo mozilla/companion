@@ -383,11 +383,14 @@ function renderCalendar() {
     upcoming.forEach(event => section.appendChild(createCompactEvent(event)));
     container.appendChild(section);
   } else {
-    // Hero: most imminent event
-    container.appendChild(createHeroCard(upcoming[0]));
+    // Hero cards: all currently-happening events, or just the next one if none are happening now
+    const nowEvents = upcoming.filter(e => getEventStatus(e).type === 'now');
+    const heroEvents = nowEvents.length > 0 ? nowEvents : [upcoming[0]];
+    heroEvents.forEach(event => container.appendChild(createHeroCard(event)));
 
     // Later today
-    if (upcoming.length > 1) {
+    const laterEvents = upcoming.filter(e => !heroEvents.includes(e));
+    if (laterEvents.length > 0) {
       const section = document.createElement('div');
       section.className = 'later-section';
 
@@ -396,7 +399,7 @@ function renderCalendar() {
       label.textContent = 'Later today';
       section.appendChild(label);
 
-      upcoming.slice(1).forEach(event => section.appendChild(createCompactEvent(event)));
+      laterEvents.forEach(event => section.appendChild(createCompactEvent(event)));
       container.appendChild(section);
     }
   }
@@ -686,28 +689,30 @@ async function init() {
     }
   });
 
-  // Refresh the hero status label every minute
+  // Refresh hero cards every minute — re-render if the set of heroes changed, otherwise update badges in-place
   browser.alarms.create('sidebar-clock', { periodInMinutes: 1 });
   browser.alarms.onAlarm.addListener(alarm => {
     if (alarm.name === 'sidebar-clock') {
       now = new Date();
-      // Only update the status badge in-place to avoid flashing
-      const card = document.querySelector('.hero-card');
-      if (card) {
-        const upcoming = getUpcomingEvents();
-        if (upcoming.length > 0) {
-          const status = getEventStatus(upcoming[0]);
-          const newType = `status-${status.type}`;
-          // Update card class
-          card.className = `hero-card ${newType}`;
-          // Update badge text
-          const badge = card.querySelector('.status-badge');
-          if (badge) badge.textContent = status.label;
-        }
-      } else if (viewDate === 'today') {
-        // No hero card yet — a new event may have become current
+      if (viewDate !== 'today') return;
+
+      const upcoming = getUpcomingEvents();
+      const nowEvents = upcoming.filter(e => getEventStatus(e).type === 'now');
+      const heroEvents = nowEvents.length > 0 ? nowEvents : upcoming.slice(0, 1);
+      const cards = document.querySelectorAll('.hero-card');
+
+      if (cards.length !== heroEvents.length) {
         renderCalendar();
+        return;
       }
+
+      // Update badges in-place to avoid flashing
+      cards.forEach((card, i) => {
+        const status = getEventStatus(heroEvents[i]);
+        card.className = `hero-card status-${status.type}`;
+        const badge = card.querySelector('.status-badge');
+        if (badge) badge.textContent = status.label;
+      });
     }
   });
 }
