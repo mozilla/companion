@@ -143,6 +143,7 @@ function createHeroCard(event) {
 
   const card = document.createElement('div');
   card.className = `hero-card status-${status.type}`;
+  card.dataset.eventId = event.id || event.originalId || '';
 
   // Status badge
   const badge = document.createElement('div');
@@ -701,7 +702,9 @@ async function init() {
       const heroEvents = nowEvents.length > 0 ? nowEvents : upcoming.slice(0, 1);
       const cards = document.querySelectorAll('.hero-card');
 
-      if (cards.length !== heroEvents.length) {
+      const heroIds = heroEvents.map(e => e.id || e.originalId || '');
+      const cardIds = [...cards].map(c => c.dataset.eventId || '');
+      if (cards.length !== heroEvents.length || heroIds.some((id, i) => id !== cardIds[i])) {
         renderCalendar();
         return;
       }
