@@ -121,12 +121,12 @@ const conferencingInfo = [
   {
     name: "Teams",
     domain: "teams.microsoft.com",
-    icon: browser.runtime.getURL("public/teams.png"),
+    icon: browser.runtime.getURL("public/teams.svg"),
   },
   {
     name: "Meet",
     domain: "meet.google.com",
-    icon: browser.runtime.getURL("public/meet.png"),
+    icon: browser.runtime.getURL("public/meet.svg"),
   },
   {
     name: "Jitsi",
