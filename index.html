@@ -108,6 +108,11 @@
         cursor: pointer;
       }
       .popup-toggle-row:hover { background: var(--event-separator-color); border-radius: calc(var(--border-radius) - 2px); }
+      .popup-shortcut {
+        padding: 6px 12px;
+        font-size: 11px;
+        color: var(--text-color-secondary);
+      }
 
       /* ── Hero card ── */
       .hero-card {
@@ -264,7 +269,7 @@
         margin: 0 12px 12px;
       }
       .later-section-tomorrow {
-        margin-top: 24px;
+        margin-top: 12px;
       }
       .section-label {
         display: block;
@@ -501,6 +506,8 @@
               <span>Recent Documents</span>
               <input type="checkbox" id="recent-docs-toggle" checked />
             </label>
+            <div class="popup-divider"></div>
+            <div class="popup-shortcut">Shortcut: Alt+C</div>
           </div>
           <button id="settings-btn" class="footer-btn" title="Settings">
             <img src="chrome://global/skin/icons/settings.svg" alt="Settings" />

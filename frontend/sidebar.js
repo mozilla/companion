@@ -95,7 +95,7 @@ function getEventStatus(event) {
   }
 
   const minutesUntil = (start - now) / 60000;
-  if (minutesUntil <= 60) {
+  if (minutesUntil <= 30) {
     return { label: `In ${Math.ceil(minutesUntil)} min`, type: 'soon' };
   }
 
@@ -384,20 +384,22 @@ function renderCalendar() {
     upcoming.forEach(event => section.appendChild(createCompactEvent(event)));
     container.appendChild(section);
   } else {
-    // Hero cards: all currently-happening events, or just the next one if none are happening now
-    const nowEvents = upcoming.filter(e => getEventStatus(e).type === 'now');
-    const heroEvents = nowEvents.length > 0 ? nowEvents : [upcoming[0]];
+    // Hero cards: currently-happening events, or events starting within 30 min
+    const heroEvents = upcoming.filter(e => {
+      const type = getEventStatus(e).type;
+      return type === 'now' || type === 'soon';
+    });
     heroEvents.forEach(event => container.appendChild(createHeroCard(event)));
 
     // Later today
     const laterEvents = upcoming.filter(e => !heroEvents.includes(e));
     if (laterEvents.length > 0) {
       const section = document.createElement('div');
-      section.className = 'later-section';
+      section.className = 'later-section' + (heroEvents.length === 0 ? ' later-section-tomorrow' : '');
 
       const label = document.createElement('div');
       label.className = 'section-label';
-      label.textContent = 'Later today';
+      label.textContent = heroEvents.length > 0 ? 'Later today' : 'Today';
       section.appendChild(label);
 
       laterEvents.forEach(event => section.appendChild(createCompactEvent(event)));
@@ -698,8 +700,10 @@ async function init() {
       if (viewDate !== 'today') return;
 
       const upcoming = getUpcomingEvents();
-      const nowEvents = upcoming.filter(e => getEventStatus(e).type === 'now');
-      const heroEvents = nowEvents.length > 0 ? nowEvents : upcoming.slice(0, 1);
+      const heroEvents = upcoming.filter(e => {
+        const type = getEventStatus(e).type;
+        return type === 'now' || type === 'soon';
+      });
       const cards = document.querySelectorAll('.hero-card');
 
       const heroIds = heroEvents.map(e => e.id || e.originalId || '');
