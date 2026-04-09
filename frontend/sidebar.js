@@ -8,6 +8,7 @@ let pinnedDocs = [];
 let now = new Date();
 let backendStatus = 'idle';
 let viewDate = 'today'; // 'today' | 'tomorrow'
+let collapsedHeroes = new Set();
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 
@@ -145,11 +146,28 @@ function createHeroCard(event) {
   card.className = `hero-card status-${status.type}`;
   card.dataset.eventId = event.id || event.originalId || '';
 
-  // Status badge
+  // Status badge + minimize button
+  const header = document.createElement('div');
+  header.className = 'hero-header';
+
   const badge = document.createElement('div');
   badge.className = 'status-badge';
   badge.textContent = status.label;
-  card.appendChild(badge);
+  header.appendChild(badge);
+
+  const minimize = document.createElement('button');
+  minimize.className = 'hero-minimize-btn';
+  minimize.textContent = '−';
+  minimize.title = 'Minimize';
+  minimize.addEventListener('click', e => {
+    e.stopPropagation();
+    collapsedHeroes.add(event.id || event.originalId || '');
+    browser.storage.local.set({ collapsedHeroes: [...collapsedHeroes] });
+    renderCalendar();
+  });
+  header.appendChild(minimize);
+
+  card.appendChild(header);
 
   // Title (clicks to open in calendar)
   const title = document.createElement('a');
@@ -389,7 +407,28 @@ function renderCalendar() {
       const type = getEventStatus(e).type;
       return type === 'now' || type === 'soon';
     });
-    heroEvents.forEach(event => container.appendChild(createHeroCard(event)));
+    heroEvents.forEach(event => {
+      const eventId = event.id || event.originalId || '';
+      if (collapsedHeroes.has(eventId)) {
+        const row = createCompactEvent(event);
+        row.style.margin = '0 12px';
+        const expand = document.createElement('button');
+        expand.className = 'hero-expand-btn';
+        expand.textContent = '+';
+        expand.title = 'Expand';
+        expand.addEventListener('click', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          collapsedHeroes.delete(eventId);
+          browser.storage.local.set({ collapsedHeroes: [...collapsedHeroes] });
+          renderCalendar();
+        });
+        row.appendChild(expand);
+        container.appendChild(row);
+      } else {
+        container.appendChild(createHeroCard(event));
+      }
+    });
 
     // Later today
     const laterEvents = upcoming.filter(e => !heroEvents.includes(e));
@@ -557,16 +596,18 @@ function debouncedSync(calendarChanged, docsChanged) {
 }
 
 async function syncStorage(calendarChanged = true, docsChanged = true) {
-  const [eventData, statusData, docsData, pinnedData] = await Promise.all([
+  const [eventData, statusData, docsData, pinnedData, collapsedData] = await Promise.all([
     browser.storage.local.get('events'),
     browser.storage.local.get('status'),
     browser.storage.local.get('recentDocs'),
     browser.storage.local.get('pinnedDocs'),
+    browser.storage.local.get('collapsedHeroes'),
   ]);
   events = eventData.events || [];
   backendStatus = statusData.status || 'idle';
   recentDocs = docsData.recentDocs || [];
   pinnedDocs = pinnedData.pinnedDocs || [];
+  collapsedHeroes = new Set(collapsedData.collapsedHeroes || []);
 
   const refreshIcon = document.querySelector('#refresh-btn img');
   if (refreshIcon) {

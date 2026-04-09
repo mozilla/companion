@@ -94,7 +94,7 @@ browser.runtime.onMessage.addListener((request) => {
       } catch (e) {
         console.error(e);
       }
-      browser.storage.local.remove(['events', 'recentDocs']);
+      browser.storage.local.remove(['events', 'recentDocs', 'collapsedHeroes']);
       break;
     case 'refresh':
       fetchEvents();
