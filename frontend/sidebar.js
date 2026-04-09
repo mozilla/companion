@@ -347,6 +347,7 @@ function createCompactEvent(event) {
 // ── Render ────────────────────────────────────────────────────────────────────
 
 function renderCalendar() {
+  now = new Date();
   const container = document.getElementById('calendar-view');
   container.innerHTML = '';
   container.style.animation = 'none';
