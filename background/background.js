@@ -94,7 +94,7 @@ browser.runtime.onMessage.addListener((request) => {
       } catch (e) {
         console.error(e);
       }
-      browser.storage.local.remove(['events', 'recentDocs', 'collapsedHeroes']);
+      browser.storage.local.remove(['events', 'recentDocs', 'collapsedHeroes', 'unreadCount']);
       break;
     case 'refresh':
       fetchEvents();
@@ -106,6 +106,7 @@ OnlineServices.init().then(() => fetchEvents());
 
 const syncAlarmName = 'companion-event-sync';
 const refreshAlarmName = 'companion-event-refresh';
+const unreadAlarmName = 'companion-unread-sync';
 
 browser.alarms.clear(syncAlarmName).then(() => {
   browser.alarms.create(syncAlarmName, { periodInMinutes: 10 });
@@ -113,10 +114,22 @@ browser.alarms.clear(syncAlarmName).then(() => {
 browser.alarms.clear(refreshAlarmName).then(() => {
   browser.alarms.create(refreshAlarmName, { periodInMinutes: 1 });
 });
+browser.alarms.clear(unreadAlarmName).then(() => {
+  browser.alarms.create(unreadAlarmName, { periodInMinutes: 1 });
+});
+
+async function fetchUnreadCount() {
+  const services = OnlineServices.getAllServices();
+  if (!services.length) return;
+  const results = await Promise.allSettled(services.map(s => s.getUnreadCount()));
+  const unreadCount = results.reduce((sum, r) => sum + (r.value || 0), 0);
+  browser.storage.local.set({ unreadCount });
+}
 
 browser.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === syncAlarmName) fetchEvents();
   if (alarm.name === refreshAlarmName) maybeNotify();
+  if (alarm.name === unreadAlarmName) fetchUnreadCount();
 });
 
 browser.storage.onChanged.addListener((changes) => {

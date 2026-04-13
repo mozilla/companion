@@ -8,6 +8,7 @@ let pinnedDocs = [];
 let now = new Date();
 let backendStatus = 'idle';
 let viewDate = 'today'; // 'today' | 'tomorrow'
+let unreadCount = 0;
 let collapsedHeroes = new Set();
 
 // ── Utilities ────────────────────────────────────────────────────────────────
@@ -458,6 +459,22 @@ function renderCalendar() {
   }
 }
 
+function updateUnreadBadge() {
+  const btn = document.getElementById('gmail-btn');
+  if (!btn) return;
+  let badge = btn.querySelector('.unread-badge');
+  if (unreadCount > 0) {
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'unread-badge';
+      btn.appendChild(badge);
+    }
+    badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+  } else if (badge) {
+    badge.remove();
+  }
+}
+
 function docContext(doc) {
   function relativeTime(dateStr) {
     const days = Math.floor((Date.now() - new Date(dateStr)) / 86400000);
@@ -597,18 +614,21 @@ function debouncedSync(calendarChanged, docsChanged) {
 }
 
 async function syncStorage(calendarChanged = true, docsChanged = true) {
-  const [eventData, statusData, docsData, pinnedData, collapsedData] = await Promise.all([
+  const [eventData, statusData, docsData, pinnedData, collapsedData, unreadData] = await Promise.all([
     browser.storage.local.get('events'),
     browser.storage.local.get('status'),
     browser.storage.local.get('recentDocs'),
     browser.storage.local.get('pinnedDocs'),
     browser.storage.local.get('collapsedHeroes'),
+    browser.storage.local.get('unreadCount'),
   ]);
   events = eventData.events || [];
   backendStatus = statusData.status || 'idle';
   recentDocs = docsData.recentDocs || [];
   pinnedDocs = pinnedData.pinnedDocs || [];
   collapsedHeroes = new Set(collapsedData.collapsedHeroes || []);
+  unreadCount = unreadData.unreadCount || 0;
+  updateUnreadBadge();
 
   const refreshIcon = document.querySelector('#refresh-btn img');
   if (refreshIcon) {
@@ -631,10 +651,11 @@ async function init() {
     browser.i18n.getMessage('connect');
 
 
-  // Connect button
+  // Connect buttons
   document.getElementById('connect-btn').addEventListener('click', () => {
     browser.runtime.sendMessage({ command: 'signin', service: 'google' });
   });
+
 
   // Today / Tomorrow toggle
   document.getElementById('view-today-btn').addEventListener('click', (e) => {
@@ -727,7 +748,7 @@ async function init() {
         showLoginView();
       }
     }
-    if ('events' in changes || 'status' in changes || 'recentDocs' in changes || 'pinnedDocs' in changes) {
+    if ('events' in changes || 'status' in changes || 'recentDocs' in changes || 'pinnedDocs' in changes || 'unreadCount' in changes) {
       const calendarChanged = 'events' in changes || 'status' in changes;
       const docsChanged = 'recentDocs' in changes || 'pinnedDocs' in changes;
       debouncedSync(calendarChanged, docsChanged);

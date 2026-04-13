@@ -186,6 +186,20 @@ class GoogleService {
     })
   }
 
+  async getUnreadCount() {
+    let response;
+    try {
+      response = await fetch('https://mail.google.com/mail/feed/atom');
+    } catch (ex) {
+      return 0;
+    }
+    if (!response.ok) return 0;
+    const text = await response.text();
+    const doc = new DOMParser().parseFromString(text, 'text/xml');
+    const fullcount = doc.querySelector('fullcount');
+    return fullcount ? parseInt(fullcount.textContent, 10) : 0;
+  }
+
   async getRecentDocs() {
     const token = await this.getToken();
     if (!token) return [];
@@ -292,9 +306,10 @@ export const OnlineServices = {
     }
     this.alreadyFetching = true
 
-    let [eventResults, docResults] = await Promise.all([
+    let [eventResults, docResults, unreadResults] = await Promise.all([
       Promise.allSettled(servicesData.map(service => service.getNextMeetings())),
       Promise.allSettled(servicesData.map(service => service.getRecentDocs())),
+      Promise.allSettled(servicesData.map(service => service.getUnreadCount())),
     ]);
 
     if (eventResults.some((r) => r.value != null)) {
@@ -314,6 +329,9 @@ export const OnlineServices = {
         browser.storage.local.set({ pinnedDocs: updated });
       }
     }
+
+    const unreadCount = unreadResults.reduce((sum, r) => sum + (r.value || 0), 0);
+    browser.storage.local.set({ unreadCount });
 
     this.alreadyFetching = false
   },
