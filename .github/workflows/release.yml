@@ -14,21 +14,38 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: check version change
+        id: check
+        run: |
+          OLD_VERSION=$(git show HEAD~1:manifest.json | jq -r .version)
+          NEW_VERSION=$(jq -r .version manifest.json)
+          if [ "$OLD_VERSION" = "$NEW_VERSION" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: get version
+        if: steps.check.outputs.skip != 'true'
         id: version
         run: echo "version=$(jq -r .version manifest.json)" >> $GITHUB_OUTPUT
 
       - name: inject secrets
+        if: steps.check.outputs.skip != 'true'
         run: |
           sed -e "s/GOOGLE_CLIENT_ID/${{ secrets.GOOGLE_CLIENT_ID }}/g" \
               -e "s/GOOGLE_CLIENT_SECRET/${{ secrets.GOOGLE_CLIENT_SECRET }}/g" \
               background/secrets.js.template > background/secrets.js
 
       - name: install web-ext
+        if: steps.check.outputs.skip != 'true'
         run: npm install -g web-ext
 
       - name: sign extension
+        if: steps.check.outputs.skip != 'true'
         run: |
           web-ext sign \
             --source-dir=. \
@@ -39,6 +56,7 @@ jobs:
             --timeout=900000
 
       - name: update updates.json
+        if: steps.check.outputs.skip != 'true'
         run: |
           VERSION=${{ steps.version.outputs.version }}
           SIGNED_XPI=$(ls web-ext-artifacts/*.xpi | head -1)
@@ -54,6 +72,7 @@ jobs:
           git push
 
       - name: release
+        if: steps.check.outputs.skip != 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
