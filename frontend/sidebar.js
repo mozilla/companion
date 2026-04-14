@@ -17,6 +17,12 @@ function formatTime(date) {
   return new Date(date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
+function updateOverflowTooltips() {
+  document.querySelectorAll('.compact-title, .hero-link-chip, .doc-name, .doc-context').forEach(el => {
+    el.title = el.scrollWidth > el.clientWidth ? el.textContent : '';
+  });
+}
+
 const CONFERENCE_DOMAINS = ['zoom.us', 'teams.microsoft.com', 'meet.google.com', 'meet.jit.si', 'gotomeeting.com', 'webex.com', 'skype.com'];
 
 function isConferenceUrl(url) {
@@ -275,7 +281,6 @@ function createHeroCard(event) {
       link.className = 'hero-link-chip';
       link.href = attachment.url;
       link.target = '_blank';
-      link.title = attachment.text || attachment.url;
       if (attachment.iconUrl) {
         const icon = document.createElement('img');
         icon.src = attachment.iconUrl;
@@ -457,6 +462,8 @@ function renderCalendar() {
     aside.appendChild(spinner);
     container.appendChild(aside);
   }
+
+  updateOverflowTooltips();
 }
 
 function updateUnreadBadge() {
@@ -578,6 +585,8 @@ function renderRecentDocs() {
   });
 
   container.appendChild(section);
+
+  updateOverflowTooltips();
 }
 
 // ── View management ───────────────────────────────────────────────────────────
