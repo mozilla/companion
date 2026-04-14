@@ -301,6 +301,7 @@ function createHeroCard(event) {
     card.appendChild(docsSection);
   }
 
+  applyUnacceptedTreatment(card, event);
 
   return card;
 }
@@ -347,7 +348,14 @@ function createCompactEvent(event) {
     item.appendChild(joinLink);
   }
 
+  applyUnacceptedTreatment(item, event);
+
   return item;
+}
+
+function applyUnacceptedTreatment(element, event) {
+  if (event.responseStatus === 'accepted') return;
+  element.style.background = 'repeating-linear-gradient(135deg, transparent, transparent 4px, color-mix(in srgb, currentColor 6%, transparent) 4px, color-mix(in srgb, currentColor 6%, transparent) 8px)';
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
