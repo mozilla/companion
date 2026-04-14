@@ -360,13 +360,15 @@ function applyUnacceptedTreatment(element, event) {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 
-function renderCalendar() {
+function renderCalendar(animate = false) {
   now = new Date();
   const container = document.getElementById('calendar-view');
   container.innerHTML = '';
-  container.style.animation = 'none';
-  container.offsetHeight; // force reflow
-  container.style.animation = '';
+  if (animate) {
+    container.style.animation = 'none';
+    container.offsetHeight; // force reflow
+    container.style.animation = '';
+  }
 
   // Keep the next-day button label current
   const tomorrowBtn = document.getElementById('view-tomorrow-btn');
@@ -611,7 +613,7 @@ function showCalendarView() {
   document.getElementById('footer').style.display = 'flex';
   document.getElementById('login-view').style.display = 'none';
   document.getElementById('calendar-view').style.display = 'block';
-  renderCalendar();
+  renderCalendar(true);
 }
 
 let syncDebounce = null;
@@ -639,21 +641,36 @@ async function syncStorage(calendarChanged = true, docsChanged = true) {
     browser.storage.local.get('collapsedHeroes'),
     browser.storage.local.get('unreadCount'),
   ]);
-  events = eventData.events || [];
-  backendStatus = statusData.status || 'idle';
-  recentDocs = docsData.recentDocs || [];
-  pinnedDocs = pinnedData.pinnedDocs || [];
-  collapsedHeroes = new Set(collapsedData.collapsedHeroes || []);
-  unreadCount = unreadData.unreadCount || 0;
-  updateUnreadBadge();
+  const newEvents = eventData.events || [];
+  const newStatus = statusData.status || 'idle';
+  const newRecentDocs = docsData.recentDocs || [];
+  const newPinnedDocs = pinnedData.pinnedDocs || [];
+  const newCollapsed = new Set(collapsedData.collapsedHeroes || []);
+  const newUnread = unreadData.unreadCount || 0;
+
+  const eventsChanged = JSON.stringify(newEvents) !== JSON.stringify(events);
+  const statusChanged = newStatus !== backendStatus;
+  const recentDocsChanged = JSON.stringify(newRecentDocs) !== JSON.stringify(recentDocs);
+  const pinnedDocsChanged = JSON.stringify(newPinnedDocs) !== JSON.stringify(pinnedDocs);
+
+  events = newEvents;
+  backendStatus = newStatus;
+  recentDocs = newRecentDocs;
+  pinnedDocs = newPinnedDocs;
+  collapsedHeroes = newCollapsed;
+
+  if (newUnread !== unreadCount) {
+    unreadCount = newUnread;
+    updateUnreadBadge();
+  }
 
   const refreshIcon = document.querySelector('#refresh-btn img');
   if (refreshIcon) {
     refreshIcon.classList.toggle('spinning', backendStatus === 'fetching');
   }
 
-  if (calendarChanged) renderCalendar();
-  if (docsChanged) renderRecentDocs();
+  if (calendarChanged && (eventsChanged || statusChanged)) renderCalendar();
+  if (docsChanged && (recentDocsChanged || pinnedDocsChanged)) renderRecentDocs();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -680,14 +697,14 @@ async function init() {
     viewDate = 'today';
     document.getElementById('view-today-btn').classList.add('active');
     document.getElementById('view-tomorrow-btn').classList.remove('active');
-    renderCalendar();
+    renderCalendar(true);
   });
   document.getElementById('view-tomorrow-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     viewDate = 'tomorrow';
     document.getElementById('view-tomorrow-btn').classList.add('active');
     document.getElementById('view-today-btn').classList.remove('active');
-    renderCalendar();
+    renderCalendar(true);
   });
 
   document.getElementById('gmail-btn').addEventListener('click', (e) => {
