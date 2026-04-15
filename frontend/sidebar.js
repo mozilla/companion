@@ -428,6 +428,7 @@ function renderCalendar(animate = false) {
       const eventId = event.id || event.originalId || '';
       if (collapsedHeroes.has(eventId)) {
         const row = createCompactEvent(event);
+        row.dataset.heroId = eventId;
         row.style.margin = '0 12px';
         const expand = document.createElement('button');
         expand.className = 'hero-expand-btn';
@@ -837,34 +838,62 @@ async function init() {
   document.addEventListener('click', closeContextMenu);
   window.addEventListener('blur', closeContextMenu);
 
-  // Refresh hero cards every minute — re-render if the set of heroes changed, otherwise update badges in-place
+  // Update hero badges every minute — surgical DOM updates, no full re-render
   browser.alarms.create('sidebar-clock', { periodInMinutes: 1 });
   browser.alarms.onAlarm.addListener(alarm => {
     if (alarm.name === 'sidebar-clock') {
       now = new Date();
       if (viewDate !== 'today') return;
 
+      const container = document.getElementById('calendar-view');
       const upcoming = getUpcomingEvents();
       const heroEvents = upcoming.filter(e => {
         const type = getEventStatus(e).type;
         return type === 'now' || type === 'soon';
       });
-      const cards = document.querySelectorAll('.hero-card');
+      const heroIds = new Set(heroEvents.map(e => e.id || e.originalId || ''));
 
-      const heroIds = heroEvents.map(e => e.id || e.originalId || '');
-      const cardIds = [...cards].map(c => c.dataset.eventId || '');
-      if (cards.length !== heroEvents.length || heroIds.some((id, i) => id !== cardIds[i])) {
-        renderCalendar();
-        return;
-      }
-
-      // Update badges in-place to avoid flashing
-      cards.forEach((card, i) => {
-        const status = getEventStatus(heroEvents[i]);
-        card.className = `hero-card status-${status.type}`;
-        const badge = card.querySelector('.status-badge');
-        if (badge) badge.textContent = status.label;
+      // Remove ended or no-longer-hero cards
+      container.querySelectorAll('.hero-card').forEach(card => {
+        if (!heroIds.has(card.dataset.eventId)) {
+          card.remove();
+        }
       });
+
+      // Remove collapsed hero compact rows that ended
+      container.querySelectorAll('.compact-event[data-hero-id]').forEach(row => {
+        if (!heroIds.has(row.dataset.heroId)) {
+          row.remove();
+        }
+      });
+
+      // Update badges on remaining hero cards
+      container.querySelectorAll('.hero-card').forEach(card => {
+        const event = heroEvents.find(e => (e.id || e.originalId || '') === card.dataset.eventId);
+        if (event) {
+          const status = getEventStatus(event);
+          card.className = `hero-card status-${status.type}`;
+          card.dataset.eventId = event.id || event.originalId || '';
+          const badge = card.querySelector('.status-badge');
+          if (badge) badge.textContent = status.label;
+        }
+      });
+
+      // Add new hero cards for events that just became 'soon'
+      const existingIds = new Set([...container.querySelectorAll('.hero-card')].map(c => c.dataset.eventId));
+      heroEvents.forEach(event => {
+        const eventId = event.id || event.originalId || '';
+        if (!existingIds.has(eventId) && !collapsedHeroes.has(eventId)) {
+          const laterSection = container.querySelector('.later-section');
+          container.insertBefore(createHeroCard(event), laterSection);
+        }
+      });
+
+      // Update section label
+      const label = container.querySelector('.section-label');
+      const hasHeroes = container.querySelector('.hero-card') !== null;
+      if (label && label.textContent !== 'Today' && label.textContent !== 'Later today') return;
+      if (label) label.textContent = hasHeroes ? 'Later today' : 'Today';
     }
   });
 }
