@@ -38,8 +38,16 @@ class GoogleService {
     )
   }
 
-  async connect() {
-    let token = await this.#auth.connect()
+  getAuthUrl() {
+    return this.#auth.getAuthUrl()
+  }
+
+  getRedirectBase() {
+    return this.#auth.getRedirectBase()
+  }
+
+  async completeAuth(redirectUrl) {
+    let token = await this.#auth.exchangeCodeFromUrl(redirectUrl)
     if (token) {
       OnlineServices.persist()
     }
@@ -265,19 +273,25 @@ export const OnlineServices = {
     browser.storage.local.set({ 'onlineservices.config': JSON.parse(config) })
   },
 
-  async createService(type) {
-    let service
+  buildService(type) {
     if (type.startsWith('google')) {
-      service = new GoogleService({ type })
-    } else {
-      throw new Error(`Unknown service "${type}"`)
+      return new GoogleService({ type })
     }
+    throw new Error(`Unknown service "${type}"`)
+  },
 
-    let token = await service.connect()
-    if (!token) {
-      return null
-    }
+  getAuthUrl(type) {
+    return this.buildService(type).getAuthUrl()
+  },
 
+  getRedirectBase(type) {
+    return this.buildService(type).getRedirectBase()
+  },
+
+  async completeAuth(type, redirectUrl) {
+    const service = this.buildService(type)
+    const token = await service.completeAuth(redirectUrl)
+    if (!token) return null
     this.ServiceInstances.add(service)
     this.persist()
     return service

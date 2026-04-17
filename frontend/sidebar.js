@@ -682,14 +682,10 @@ async function init() {
     browser.i18n.getMessage('service-name.google');
   document.getElementById('service-description').textContent =
     browser.i18n.getMessage('service-labels.google');
-  document.getElementById('connect-btn').textContent =
-    browser.i18n.getMessage('connect');
-
-
-  // Connect buttons
-  document.getElementById('connect-btn').addEventListener('click', () => {
-    browser.runtime.sendMessage({ command: 'signin', service: 'google' });
-  });
+  const connectBtn = document.getElementById('connect-btn');
+  connectBtn.textContent = browser.i18n.getMessage('connect');
+  const authUrl = await browser.runtime.sendMessage({ command: 'getAuthUrl', service: 'google' });
+  connectBtn.href = authUrl;
 
 
   // Today / Tomorrow toggle
@@ -799,6 +795,8 @@ async function init() {
     }
   }
   document.addEventListener('contextmenu', e => {
+    // Let native context menu through for Connect button (right-click to open in container)
+    if (e.target.closest('#connect-btn')) return;
     e.preventDefault();
     closeContextMenu();
 

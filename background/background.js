@@ -82,11 +82,44 @@ async function fetchEvents() {
   await setStatus('idle');
 }
 
+let authListener = null;
+
+function registerAuthListener(type) {
+  if (authListener) return;
+  const redirectBase = OnlineServices.getRedirectBase(type);
+  authListener = async (tabId, changeInfo) => {
+    if (!changeInfo.url || !changeInfo.url.startsWith(redirectBase)) return;
+    browser.tabs.onUpdated.removeListener(authListener);
+    authListener = null;
+    browser.tabs.remove(tabId).catch(() => {});
+    const service = await OnlineServices.completeAuth(type, changeInfo.url);
+    if (service) {
+      fetchEvents();
+    } else {
+      registerAuthListener(type);
+    }
+  };
+  browser.tabs.onUpdated.addListener(authListener, { properties: ['url'] });
+}
+
+function unregisterAuthListener() {
+  if (authListener) {
+    browser.tabs.onUpdated.removeListener(authListener);
+    authListener = null;
+  }
+}
+
+async function maybeRegisterAuthListener() {
+  const result = await browser.storage.local.get('onlineservices.config');
+  const config = result['onlineservices.config'];
+  const connected = config && config.some(s => s.type.startsWith('google'));
+  if (!connected) registerAuthListener('google');
+}
+
 browser.runtime.onMessage.addListener((request) => {
   switch (request.command) {
-    case 'signin':
-      OnlineServices.createService(request.service).then(() => fetchEvents());
-      break;
+    case 'getAuthUrl':
+      return Promise.resolve(OnlineServices.getAuthUrl(request.service));
     case 'signout':
       try {
         const service = OnlineServices.getServices('google')[0];
@@ -95,6 +128,7 @@ browser.runtime.onMessage.addListener((request) => {
         console.error(e);
       }
       browser.storage.local.remove(['events', 'recentDocs', 'collapsedHeroes', 'unreadCount']);
+      registerAuthListener('google');
       break;
     case 'refresh':
       fetchEvents();
@@ -102,7 +136,10 @@ browser.runtime.onMessage.addListener((request) => {
   }
 });
 
-OnlineServices.init().then(() => fetchEvents());
+OnlineServices.init().then(() => {
+  maybeRegisterAuthListener();
+  fetchEvents();
+});
 
 const syncAlarmName = 'companion-event-sync';
 const refreshAlarmName = 'companion-event-refresh';

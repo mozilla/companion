@@ -105,7 +105,7 @@ export class OAuth2 {
 
     return this.getTokenPromise;
   }
-  async connect() {
+  getAuthUrl() {
     let params = new URLSearchParams({
       client_id: this.clientId,
       response_type: 'code',
@@ -114,28 +114,18 @@ export class OAuth2 {
       redirect_uri: this.redirectionEndpoint,
       scope: this.scope.join(' '),
     });
+    return `${this.authorizationEndpoint}?${params.toString()}`;
+  }
 
-    const authUrl = `${this.authorizationEndpoint}?${params.toString()}`;
-    const redirectBase = this.redirectionEndpoint;
+  getRedirectBase() {
+    return this.redirectionEndpoint;
+  }
 
-    await browser.tabs.create({ url: authUrl });
-
-    const responseUrl = await new Promise((resolve, reject) => {
-      const onTabUpdated = (tabId, changeInfo) => {
-        if (!changeInfo.url || !changeInfo.url.startsWith(redirectBase)) {
-          return;
-        }
-        browser.tabs.onUpdated.removeListener(onTabUpdated);
-        browser.tabs.remove(tabId).catch(() => {});
-        resolve(changeInfo.url);
-      };
-
-      browser.tabs.onUpdated.addListener(onTabUpdated, { properties: ['url'] });
-    });
-
-    const url = new URL(responseUrl);
+  async exchangeCodeFromUrl(redirectUrl) {
+    const url = new URL(redirectUrl);
     const urlParams = new URLSearchParams(url.search.slice(1));
     const result = Object.fromEntries(urlParams.entries());
+    if (!result.code) return null;
     return this.requestAccessToken(result.code);
   }
 

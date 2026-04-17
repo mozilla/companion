@@ -23,18 +23,33 @@ async function init() {
   connected = !!(config && config.some(s => s.type.startsWith('google')));
   updateStatus();
 
-  document.getElementById('connect-disconnect-btn').addEventListener('click', () => {
-    browser.runtime.sendMessage({
-      command: connected ? 'signout' : 'signin',
-      service: 'google'
-    });
+  const btn = document.getElementById('connect-disconnect-btn');
+
+  async function updateConnectHref() {
+    if (!connected) {
+      const authUrl = await browser.runtime.sendMessage({ command: 'getAuthUrl', service: 'google' });
+      btn.href = authUrl;
+      btn.target = '_blank';
+    } else {
+      btn.removeAttribute('href');
+      btn.removeAttribute('target');
+    }
+  }
+  await updateConnectHref();
+
+  btn.addEventListener('click', (e) => {
+    if (connected) {
+      e.preventDefault();
+      browser.runtime.sendMessage({ command: 'signout', service: 'google' });
+    }
   });
 
-  browser.storage.onChanged.addListener((changes) => {
+  browser.storage.onChanged.addListener(async (changes) => {
     if ('onlineservices.config' in changes) {
       const newConfig = changes['onlineservices.config'].newValue;
       connected = !!(newConfig && newConfig.some(s => s.type.startsWith('google')));
       updateStatus();
+      await updateConnectHref();
     }
   });
 }
