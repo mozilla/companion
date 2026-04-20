@@ -787,7 +787,11 @@ async function init() {
   });
 
 // Update hero badges every minute — surgical DOM updates, no full re-render
-  browser.alarms.create('sidebar-clock', { periodInMinutes: 1 });
+  const msToNextMinute = 60000 - (Date.now() % 60000);
+  browser.alarms.create('sidebar-clock', {
+    when: Date.now() + msToNextMinute,
+    periodInMinutes: 1,
+  });
   browser.alarms.onAlarm.addListener(alarm => {
     if (alarm.name === 'sidebar-clock') {
       now = new Date();
