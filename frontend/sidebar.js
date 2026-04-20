@@ -786,57 +786,7 @@ async function init() {
     }
   });
 
-  // Block browser context menu; show custom "Copy Link" on join buttons
-  let activeMenu = null;
-  function closeContextMenu() {
-    if (activeMenu) {
-      activeMenu.remove();
-      activeMenu = null;
-    }
-  }
-  document.addEventListener('contextmenu', e => {
-    // Let native context menu through for Connect button (right-click to open in container)
-    if (e.target.closest('#connect-btn')) return;
-    e.preventDefault();
-    closeContextMenu();
-
-    // Find the closest link with an href
-    const link = e.target.closest('a[href]');
-    if (!link) return;
-
-    const url = link.href;
-    if (!url) return;
-
-    const menu = document.createElement('div');
-    menu.className = 'context-menu';
-    menu.style.left = `${e.clientX}px`;
-    menu.style.top = `${e.clientY}px`;
-
-    const copyItem = document.createElement('button');
-    copyItem.className = 'context-menu-item';
-    copyItem.textContent = 'Copy Link';
-    copyItem.addEventListener('click', () => {
-      navigator.clipboard.writeText(url);
-      closeContextMenu();
-    });
-    menu.appendChild(copyItem);
-
-    document.body.appendChild(menu);
-    activeMenu = menu;
-
-    // Keep menu within viewport
-    const rect = menu.getBoundingClientRect();
-    if (rect.right > window.innerWidth) {
-      menu.style.left = `${window.innerWidth - rect.width - 4}px`;
-    }
-    if (rect.bottom > window.innerHeight) {
-      menu.style.top = `${window.innerHeight - rect.height - 4}px`;
-    }
-  });
-  document.addEventListener('click', closeContextMenu);
-  window.addEventListener('blur', closeContextMenu);
-
-  // Update hero badges every minute — surgical DOM updates, no full re-render
+// Update hero badges every minute — surgical DOM updates, no full re-render
   browser.alarms.create('sidebar-clock', { periodInMinutes: 1 });
   browser.alarms.onAlarm.addListener(alarm => {
     if (alarm.name === 'sidebar-clock') {
