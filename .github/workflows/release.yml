@@ -53,7 +53,8 @@ jobs:
             --channel=unlisted \
             --api-key=${{ secrets.AMO_JWT_ISSUER }} \
             --api-secret=${{ secrets.AMO_JWT_SECRET }} \
-            --timeout=900000
+            --timeout=900000 \
+            --ignore-files=updates.json .env.example .eslintignore .eslintrc .prettierrc .gitignore .gitmodules .github/**/* .vscode/**/* CLAUDE.md README.md
 
       - name: update updates.json
         if: steps.check.outputs.skip != 'true'
