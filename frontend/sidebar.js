@@ -588,7 +588,7 @@ function renderRecentDocs() {
       } else {
         pinnedDocs = [...pinnedDocs, doc];
       }
-      browser.storage.local.set({ pinnedDocs });
+      browser.storage.sync.set({ pinnedDocs });
     });
     row.appendChild(pin);
 
@@ -638,7 +638,7 @@ async function syncStorage(calendarChanged = true, docsChanged = true) {
     browser.storage.local.get('events'),
     browser.storage.local.get('status'),
     browser.storage.local.get('recentDocs'),
-    browser.storage.local.get('pinnedDocs'),
+    browser.storage.sync.get('pinnedDocs'),
     browser.storage.local.get('collapsedHeroes'),
     browser.storage.local.get('unreadCount'),
   ]);
@@ -738,20 +738,20 @@ async function init() {
 
   // Notifications toggle
   const notifToggle = document.getElementById('notifications-toggle');
-  const { notificationsEnabled } = await browser.storage.local.get('notificationsEnabled');
+  const { notificationsEnabled } = await browser.storage.sync.get('notificationsEnabled');
   notifToggle.checked = notificationsEnabled !== false;
   notifToggle.addEventListener('change', (e) => {
     e.stopPropagation();
-    browser.storage.local.set({ notificationsEnabled: notifToggle.checked });
+    browser.storage.sync.set({ notificationsEnabled: notifToggle.checked });
   });
 
   // Recent docs toggle
   const recentDocsToggle = document.getElementById('recent-docs-toggle');
-  const { recentDocsEnabled } = await browser.storage.local.get('recentDocsEnabled');
+  const { recentDocsEnabled } = await browser.storage.sync.get('recentDocsEnabled');
   recentDocsToggle.checked = recentDocsEnabled !== false;
   recentDocsToggle.addEventListener('change', (e) => {
     e.stopPropagation();
-    browser.storage.local.set({ recentDocsEnabled: recentDocsToggle.checked });
+    browser.storage.sync.set({ recentDocsEnabled: recentDocsToggle.checked });
     renderRecentDocs();
   });
 

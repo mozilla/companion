@@ -336,11 +336,11 @@ export const OnlineServices = {
       browser.storage.local.set({ recentDocs });
 
       // Update any pinned docs with fresh metadata
-      const { pinnedDocs } = await browser.storage.local.get('pinnedDocs');
+      const { pinnedDocs } = await browser.storage.sync.get('pinnedDocs');
       if (pinnedDocs?.length) {
         const freshById = new Map(recentDocs.map(d => [d.id, d]));
         const updated = pinnedDocs.map(d => freshById.get(d.id) || d);
-        browser.storage.local.set({ pinnedDocs: updated });
+        browser.storage.sync.set({ pinnedDocs: updated });
       }
     }
 

@@ -22,7 +22,7 @@ function isHappeningToday(startDate, endDate) {
 const notificationActions = new Map();
 
 async function maybeNotify() {
-  const { notificationsEnabled } = await browser.storage.local.get('notificationsEnabled');
+  const { notificationsEnabled } = await browser.storage.sync.get('notificationsEnabled');
   if (notificationsEnabled === false) return;
   const key = formatTime24(new Date());
   const { notificationSchedule } = await browser.storage.local.get('notificationSchedule');
