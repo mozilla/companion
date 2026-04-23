@@ -55,23 +55,22 @@ function sanitizeHTML(html) {
 }
 
 function openUrl(url) {
-  browser.tabs.query({ url }).then(tabs => {
+  browser.tabs.query({ url, currentWindow: true }).then(tabs => {
     if (tabs.length && tabs[0].id) {
       browser.tabs.update(tabs[0].id, { active: true });
-      browser.windows.update(tabs[0].windowId, { focused: true });
     } else {
       window.open(url);
     }
   });
 }
 
+
 function openDocUrl(url) {
   const basePath = url.split('?')[0].split('#')[0];
-  browser.tabs.query({ url: '*://*.google.com/*' }).then(tabs => {
+  browser.tabs.query({ url: '*://*.google.com/*', currentWindow: true }).then(tabs => {
     const match = tabs.find(tab => tab.url && tab.url.split('?')[0].split('#')[0] === basePath);
     if (match) {
       browser.tabs.update(match.id, { active: true });
-      browser.windows.update(match.windowId, { focused: true });
     } else {
       window.open(url);
     }
@@ -79,10 +78,9 @@ function openDocUrl(url) {
 }
 
 function openInCalendarTab(url) {
-  browser.tabs.query({ url: '*://calendar.google.com/*' }).then(tabs => {
+  browser.tabs.query({ url: '*://calendar.google.com/*', currentWindow: true }).then(tabs => {
     if (tabs.length && tabs[0].id) {
       browser.tabs.update(tabs[0].id, { active: true, url });
-      browser.windows.update(tabs[0].windowId, { focused: true });
     } else {
       window.open(url);
     }
@@ -706,10 +704,9 @@ async function init() {
 
   document.getElementById('gmail-btn').addEventListener('click', (e) => {
     e.preventDefault();
-    browser.tabs.query({ url: '*://mail.google.com/*' }).then(tabs => {
+    browser.tabs.query({ url: '*://mail.google.com/*', currentWindow: true }).then(tabs => {
       if (tabs.length && tabs[0].id) {
         browser.tabs.update(tabs[0].id, { active: true });
-        browser.windows.update(tabs[0].windowId, { focused: true });
       } else {
         window.open('https://mail.google.com/');
       }
