@@ -187,11 +187,53 @@ function createHeroCard(event) {
   });
   card.appendChild(title);
 
-  // Time range
-  const time = document.createElement('div');
-  time.className = 'hero-time';
-  time.textContent = `${formatTime(event.startDate)}\u2013${formatTime(event.endDate)}`;
-  card.appendChild(time);
+  // Time range + inline description chevron
+  const timeRow = document.createElement('div');
+  timeRow.className = 'hero-time';
+  const timeText = document.createElement('span');
+  timeText.textContent = `${formatTime(event.startDate)}\u2013${formatTime(event.endDate)}`;
+  timeRow.appendChild(timeText);
+
+  let descEl = null;
+  if (event.description && event.description.trim()) {
+    descEl = document.createElement('div');
+    descEl.className = 'hero-description';
+    descEl.style.display = 'none';
+    descEl.innerHTML = sanitizeHTML(event.description);
+
+    descEl.querySelectorAll('a[href]').forEach(a => {
+      if (isConferenceUrl(a.href)) {
+        const parent = a.parentElement;
+        a.remove();
+        if (parent && parent !== descEl && !parent.textContent.trim()) {
+          parent.remove();
+        }
+      } else {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          openUrl(a.href);
+        });
+      }
+    });
+
+    const arrow = document.createElement('img');
+    arrow.className = 'hero-description-arrow';
+    arrow.src = 'public/arrow-down.svg';
+    arrow.setAttribute('role', 'presentation');
+
+    const chevron = document.createElement('button');
+    chevron.className = 'hero-desc-chevron';
+    chevron.title = 'Description';
+    chevron.appendChild(arrow);
+    chevron.addEventListener('click', () => {
+      const isExpanded = descEl.style.display !== 'none';
+      descEl.style.display = isExpanded ? 'none' : 'block';
+      arrow.classList.toggle('expanded', !isExpanded);
+    });
+    timeRow.appendChild(chevron);
+  }
+
+  card.appendChild(timeRow);
 
   // Join button
   if (event.conference) {
@@ -214,55 +256,7 @@ function createHeroCard(event) {
     card.appendChild(joinBtn);
   }
 
-  // Description (collapsed by default)
-  if (event.description && event.description.trim()) {
-    const divider = document.createElement('hr');
-    divider.className = 'hero-description-divider';
-    card.appendChild(divider);
-
-    const toggle = document.createElement('div');
-    toggle.className = 'hero-description-toggle';
-
-    const label = document.createElement('span');
-    label.className = 'hero-section-label';
-    label.textContent = 'Description';
-    toggle.appendChild(label);
-
-    const arrow = document.createElement('img');
-    arrow.className = 'hero-description-arrow';
-    arrow.src = 'public/arrow-down.svg';
-    arrow.setAttribute('role', 'presentation');
-    toggle.appendChild(arrow);
-
-    const desc = document.createElement('div');
-    desc.className = 'hero-description';
-    desc.style.display = 'none';
-    desc.innerHTML = sanitizeHTML(event.description);
-
-    desc.querySelectorAll('a[href]').forEach(a => {
-      if (isConferenceUrl(a.href)) {
-        const parent = a.parentElement;
-        a.remove();
-        if (parent && parent !== desc && !parent.textContent.trim()) {
-          parent.remove();
-        }
-      } else {
-        a.addEventListener('click', e => {
-          e.preventDefault();
-          openUrl(a.href);
-        });
-      }
-    });
-
-    toggle.addEventListener('click', () => {
-      const isExpanded = desc.style.display !== 'none';
-      desc.style.display = isExpanded ? 'none' : 'block';
-      arrow.classList.toggle('expanded', !isExpanded);
-    });
-
-    card.appendChild(toggle);
-    card.appendChild(desc);
-  }
+  if (descEl) card.appendChild(descEl);
 
   // Attachments
   if (event.attachments && event.attachments.length > 0) {
