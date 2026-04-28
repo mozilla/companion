@@ -581,6 +581,7 @@ function renderRecentDocs() {
         pinnedDocs = [...pinnedDocs, doc];
       }
       browser.storage.sync.set({ pinnedDocs });
+      renderRecentDocs();
     });
     row.appendChild(pin);
 
@@ -669,6 +670,16 @@ async function syncStorage(calendarChanged = true, docsChanged = true) {
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
+  // Migrate pinnedDocs from storage.local to storage.sync (one-time)
+  const { pinnedDocs: syncPinned } = await browser.storage.sync.get('pinnedDocs');
+  if (!syncPinned) {
+    const { pinnedDocs: localPinned } = await browser.storage.local.get('pinnedDocs');
+    if (localPinned?.length) {
+      await browser.storage.sync.set({ pinnedDocs: localPinned });
+    }
+    await browser.storage.local.remove('pinnedDocs');
+  }
+
   // i18n
   document.getElementById('service-name').textContent =
     browser.i18n.getMessage('service-name.google');
