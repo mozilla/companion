@@ -27,15 +27,17 @@ async function init() {
 
   async function updateConnectHref() {
     if (!connected) {
-      const authUrl = await browser.runtime.sendMessage({ command: 'getAuthUrl', service: 'google' });
-      btn.href = authUrl;
-      btn.target = '_blank';
+      try {
+        const authUrl = await browser.runtime.sendMessage({ command: 'getAuthUrl', service: 'google' });
+        btn.href = authUrl;
+        btn.target = '_blank';
+      } catch (e) {}
     } else {
       btn.removeAttribute('href');
       btn.removeAttribute('target');
     }
   }
-  await updateConnectHref();
+  updateConnectHref(); // fire async, don't block render
 
   btn.addEventListener('click', (e) => {
     if (connected) {
@@ -49,6 +51,7 @@ async function init() {
       const newConfig = changes['onlineservices.config'].newValue;
       connected = !!(newConfig && newConfig.some(s => s.type.startsWith('google')));
       updateStatus();
+      updateConnectHref();
       await updateConnectHref();
     }
   });

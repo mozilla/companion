@@ -28,6 +28,22 @@
         font-size: 85%;
         white-space: nowrap;
       }
+      #connect-disconnect-btn {
+        background-color: var(--in-content-button-background, ButtonFace);
+        border: 1px solid var(--in-content-button-border-color, ButtonBorder);
+        border-radius: 4px;
+        padding: 8px 16px;
+        font-size: inherit;
+        cursor: pointer;
+        color: var(--in-content-button-text-color, ButtonText);
+        text-decoration: none;
+        display: inline-block;
+        white-space: nowrap;
+      }
+      #connect-disconnect-btn:hover {
+        background-color: var(--in-content-button-background-hover, ButtonFace);
+        filter: brightness(0.95);
+      }
       .status-connected::before {
         display: inline-block;
         content: "";
