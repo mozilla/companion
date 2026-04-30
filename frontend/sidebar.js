@@ -51,6 +51,34 @@ function sanitizeHTML(html) {
     }
   });
 
+  // Linkify bare URLs in text nodes (plain-text descriptions)
+  const urlRe = /https?:\/\/[^\s<>"]+/g;
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.parentElement.closest('a') === null && urlRe.test(node.textContent)) {
+      textNodes.push(node);
+    }
+    urlRe.lastIndex = 0;
+  }
+  for (const tn of textNodes) {
+    const frag = doc.createDocumentFragment();
+    let last = 0;
+    let m;
+    urlRe.lastIndex = 0;
+    while ((m = urlRe.exec(tn.textContent)) !== null) {
+      if (m.index > last) frag.appendChild(doc.createTextNode(tn.textContent.slice(last, m.index)));
+      const a = doc.createElement('a');
+      a.href = m[0];
+      a.textContent = m[0];
+      frag.appendChild(a);
+      last = m.index + m[0].length;
+    }
+    if (last < tn.textContent.length) frag.appendChild(doc.createTextNode(tn.textContent.slice(last)));
+    tn.parentNode.replaceChild(frag, tn);
+  }
+
   return doc.body.innerHTML;
 }
 
