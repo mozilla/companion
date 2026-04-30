@@ -404,8 +404,9 @@ function renderCalendar(animate = false) {
     section.className = 'later-section later-section-tomorrow';
 
     const label = document.createElement('div');
-    label.className = 'section-label';
+    label.className = 'section-label section-label-link';
     label.textContent = getNextDayLabel();
+    label.addEventListener('click', () => openInCalendarTab('https://calendar.google.com'));
     section.appendChild(label);
 
     upcoming.forEach(event => section.appendChild(createCompactEvent(event)));
@@ -447,8 +448,9 @@ function renderCalendar(animate = false) {
       section.className = 'later-section' + (heroEvents.length === 0 ? ' later-section-tomorrow' : '');
 
       const label = document.createElement('div');
-      label.className = 'section-label';
+      label.className = 'section-label section-label-link';
       label.textContent = heroEvents.length > 0 ? 'Later today' : 'Today';
+      label.addEventListener('click', () => openInCalendarTab('https://calendar.google.com'));
       section.appendChild(label);
 
       laterEvents.forEach(event => section.appendChild(createCompactEvent(event)));
