@@ -87,24 +87,28 @@ let authListener = null;
 function registerAuthListener(type) {
   if (authListener) return;
   const redirectBase = OnlineServices.getRedirectBase(type);
-  authListener = async (tabId, changeInfo) => {
-    if (!changeInfo.url || !changeInfo.url.startsWith(redirectBase)) return;
-    browser.tabs.onUpdated.removeListener(authListener);
+  authListener = async (details) => {
+    if (!details.url.startsWith(redirectBase)) return;
+    browser.webNavigation.onBeforeNavigate.removeListener(authListener);
     authListener = null;
-    browser.tabs.remove(tabId).catch(() => {});
-    const service = await OnlineServices.completeAuth(type, changeInfo.url);
+    if (details.tabId !== -1) {
+      browser.tabs.remove(details.tabId).catch(() => {});
+    }
+    const service = await OnlineServices.completeAuth(type, details.url);
     if (service) {
       fetchEvents();
     } else {
       registerAuthListener(type);
     }
   };
-  browser.tabs.onUpdated.addListener(authListener, { properties: ['url'] });
+  browser.webNavigation.onBeforeNavigate.addListener(authListener, {
+    url: [{ urlPrefix: redirectBase }],
+  });
 }
 
 function unregisterAuthListener() {
   if (authListener) {
-    browser.tabs.onUpdated.removeListener(authListener);
+    browser.webNavigation.onBeforeNavigate.removeListener(authListener);
     authListener = null;
   }
 }
@@ -172,5 +176,12 @@ browser.alarms.onAlarm.addListener(async (alarm) => {
 browser.storage.onChanged.addListener((changes) => {
   if (changes.events && changes.events.newValue) {
     updateNotificationSchedule(changes.events.newValue);
+  }
+  if (changes['onlineservices.config']) {
+    const newConfig = changes['onlineservices.config'].newValue;
+    const hasGoogle = newConfig && newConfig.some(s => s.type.startsWith('google'));
+    if (!hasGoogle) {
+      registerAuthListener('google');
+    }
   }
 });

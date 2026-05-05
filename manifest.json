@@ -9,6 +9,7 @@
     "alarms",
     "clipboardWrite",
     "tabs",
+    "webNavigation",
     "https://mail.google.com/*"
   ],
   "icons": {
