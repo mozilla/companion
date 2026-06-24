@@ -391,12 +391,38 @@
         font-size: 12px;
       }
 
+      /* ── Splitter ── */
+      #docs-splitter {
+        flex-shrink: 0;
+        height: 8px;
+        cursor: ns-resize;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: color-mix(in srgb, Canvas 100%, CanvasText 3%);
+        border-top: 1px solid var(--card-border);
+      }
+      #docs-splitter::after {
+        content: '';
+        width: 28px;
+        height: 4px;
+        border-top: 1.5px solid var(--text-color-secondary);
+        border-bottom: 1.5px solid var(--text-color-secondary);
+        opacity: 0.35;
+        border-radius: 1px;
+      }
+      #docs-splitter:hover {
+        background: color-mix(in srgb, Canvas 100%, CanvasText 6%);
+      }
+      #docs-splitter:hover::after { opacity: 0.7; }
+
       /* ── Recent docs ── */
       #recent-docs-view {
         flex-shrink: 0;
         background: color-mix(in srgb, Canvas 100%, CanvasText 4%);
         border-top: 1px solid var(--card-border);
         padding: 4px 0;
+        overflow-y: auto;
       }
       .doc-row {
         display: flex;
@@ -510,6 +536,9 @@
 
     <!-- Calendar view -->
     <div id="calendar-view" style="display:none"></div>
+
+    <!-- Splitter -->
+    <div id="docs-splitter" style="display:none"></div>
 
     <!-- Recent docs -->
     <div id="recent-docs-view"></div>

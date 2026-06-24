@@ -10,6 +10,7 @@ let backendStatus = 'idle';
 let viewDate = 'today'; // 'today' | 'tomorrow'
 let unreadCount = 0;
 let collapsedHeroes = new Set();
+let savedDocsHeight = null;
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 
@@ -420,6 +421,13 @@ function renderCalendar(animate = false) {
       subtitle.className = 'empty-subtitle';
       subtitle.textContent = viewDate === 'tomorrow' ? 'No meetings scheduled' : 'No more meetings today';
       empty.appendChild(subtitle);
+
+      const calLink = document.createElement('div');
+      calLink.className = 'section-label section-label-link';
+      calLink.textContent = 'Open Calendar';
+      calLink.style.marginTop = '12px';
+      calLink.addEventListener('click', () => openInCalendarTab('https://calendar.google.com'));
+      empty.appendChild(calLink);
     }
 
     container.appendChild(empty);
@@ -545,11 +553,14 @@ function renderRecentDocs() {
   const toggle = document.getElementById('recent-docs-toggle');
   const pinnedIds = new Set(pinnedDocs.map(d => d.id));
   const unpinnedRecent = recentDocs.filter(d => !pinnedIds.has(d.id)).slice(0, 5);
+  const splitter = document.getElementById('docs-splitter');
   if (!pinnedDocs.length && !unpinnedRecent.length || (toggle && !toggle.checked)) {
     container.style.display = 'none';
+    if (splitter) splitter.style.display = 'none';
     return;
   }
   container.style.display = 'block';
+  if (splitter) splitter.style.display = '';
 
   const section = document.createElement('div');
   section.className = 'later-section';
@@ -621,6 +632,7 @@ function renderRecentDocs() {
   container.appendChild(section);
 
   updateOverflowTooltips();
+  applyDocsHeight();
 }
 
 // ── View management ───────────────────────────────────────────────────────────
@@ -697,9 +709,60 @@ async function syncStorage(calendarChanged = true, docsChanged = true) {
   if (docsChanged && (recentDocsChanged || pinnedDocsChanged)) renderRecentDocs();
 }
 
+// ── Splitter ──────────────────────────────────────────────────────────────────
+
+function applyDocsHeight() {
+  const docsView = document.getElementById('recent-docs-view');
+  if (!savedDocsHeight) return;
+  docsView.style.height = '';
+  const natural = docsView.scrollHeight;
+  docsView.style.height = Math.min(savedDocsHeight, natural) + 'px';
+}
+
+function initSplitter() {
+  const splitter = document.getElementById('docs-splitter');
+  const docsView = document.getElementById('recent-docs-view');
+
+  browser.storage.local.get('docsHeight').then(({ docsHeight }) => {
+    if (docsHeight) {
+      savedDocsHeight = docsHeight;
+      applyDocsHeight();
+    }
+  });
+
+  let startY, startHeight, naturalHeight;
+
+  splitter.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    startY = e.clientY;
+    startHeight = docsView.offsetHeight;
+    docsView.style.height = '';
+    naturalHeight = docsView.scrollHeight;
+    docsView.style.height = startHeight + 'px';
+    splitter.setPointerCapture(e.pointerId);
+    document.body.style.userSelect = 'none';
+  });
+
+  splitter.addEventListener('pointermove', e => {
+    if (!splitter.hasPointerCapture(e.pointerId)) return;
+    const delta = startY - e.clientY;
+    docsView.style.height = Math.min(naturalHeight, Math.max(40, startHeight + delta)) + 'px';
+  });
+
+  splitter.addEventListener('pointerup', e => {
+    if (!splitter.hasPointerCapture(e.pointerId)) return;
+    splitter.releasePointerCapture(e.pointerId);
+    document.body.style.userSelect = '';
+    savedDocsHeight = docsView.offsetHeight;
+    browser.storage.local.set({ docsHeight: savedDocsHeight });
+  });
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
+  initSplitter();
+
   // Migrate pinnedDocs from storage.local to storage.sync (one-time)
   const { pinnedDocs: syncPinned } = await browser.storage.sync.get('pinnedDocs');
   if (!syncPinned) {
