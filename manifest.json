@@ -27,6 +27,21 @@
       }
     }
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://app.zoom.us/wc/*",
+        "https://meet.google.com/*",
+        "https://teams.microsoft.com/meet/*",
+        "https://teams.microsoft.com/light-meetings/*",
+        "https://*.webex.com/wc/*",
+        "https://*.webex.com/meet/*",
+        "https://meet.jit.si/*"
+      ],
+      "js": ["content/prevent-close.js"],
+      "run_at": "document_end"
+    }
+  ],
   "background": {
     "page": "background.html"
   },
