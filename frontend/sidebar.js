@@ -800,15 +800,39 @@ async function init() {
     renderCalendar(true);
   });
 
-  document.getElementById('gmail-btn').addEventListener('click', (e) => {
-    e.preventDefault();
-    browser.tabs.query({ url: '*://mail.google.com/*', currentWindow: true }).then(tabs => {
+  function openAppTab(urlPattern, fallbackUrl) {
+    browser.tabs.query({ url: urlPattern, currentWindow: true }).then(tabs => {
       if (tabs.length && tabs[0].id) {
         browser.tabs.update(tabs[0].id, { active: true });
       } else {
-        window.open('https://mail.google.com/');
+        window.open(fallbackUrl);
       }
     });
+  }
+
+  document.getElementById('gmail-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    openAppTab('*://mail.google.com/*', 'https://mail.google.com/');
+  });
+
+  document.getElementById('drive-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    openAppTab('*://drive.google.com/*', 'https://drive.google.com/');
+  });
+
+  document.getElementById('docs-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    openAppTab('*://docs.google.com/document/*', 'https://docs.google.com/document/u/0/');
+  });
+
+  document.getElementById('sheets-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    openAppTab('*://docs.google.com/spreadsheets/*', 'https://docs.google.com/spreadsheets/u/0/');
+  });
+
+  document.getElementById('slides-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    openAppTab('*://docs.google.com/presentation/*', 'https://docs.google.com/presentation/u/0/');
   });
 
   // Refresh button

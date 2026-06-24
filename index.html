@@ -35,7 +35,8 @@
         box-shadow: 0 1px 4px rgba(0,0,0,0.15);
       }
       .footer-btn:hover { filter: brightness(0.95); }
-      #gmail-btn, #new-doc-btn, #new-sheet-btn, #new-slide-btn { position: relative; }
+      #gmail-btn { position: relative; }
+      .footer-app-wrap { position: relative; }
       .unread-badge {
         position: absolute;
         top: -4px;
@@ -54,19 +55,24 @@
       }
       .new-badge {
         position: absolute;
-        bottom: -2px;
-        right: -2px;
-        font-size: 9px;
-        font-weight: bold;
+        bottom: -6px;
+        right: -8px;
+        font-size: 13px;
+        font-weight: 400;
         color: white;
         background: #1a73e8;
         border-radius: 50%;
-        width: 11px;
-        height: 11px;
+        width: 16px;
+        height: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
+        text-decoration: none;
+        cursor: pointer;
+        line-height: 16px;
+        padding-bottom: 2px;
       }
+      .new-badge:hover { background: #1558b0; }
       .footer-btn img {
         width: 14px;
         height: 14px;
@@ -547,20 +553,29 @@
     <div id="footer" style="display:none">
       <div id="footer-left">
         <a id="gmail-btn" class="footer-btn" title="Gmail" href="https://mail.google.com/" target="_blank">
-          <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" alt="Gmail" />
+          <img src="https://ssl.gstatic.com/ui/v1/icons/mail/images/favicon_gmail_2026_v2.ico" alt="Gmail" />
         </a>
-        <a id="new-doc-btn" class="footer-btn" title="New Doc" href="https://docs.new/" target="_blank">
-          <img src="https://ssl.gstatic.com/docs/documents/images/kix-favicon-2023q4.ico" alt="New Doc" />
-          <span class="new-badge">+</span>
+        <a id="drive-btn" class="footer-btn" title="Google Drive" href="https://drive.google.com/">
+          <img src="https://ssl.gstatic.com/docs/doclist/images/drive_favicon_2026_32dp.png" alt="Drive" />
         </a>
-        <a id="new-sheet-btn" class="footer-btn" title="New Sheet" href="https://sheets.new/" target="_blank">
-          <img src="https://ssl.gstatic.com/docs/spreadsheets/spreadsheets_2023q4.ico" alt="New Sheet" />
-          <span class="new-badge">+</span>
-        </a>
-        <a id="new-slide-btn" class="footer-btn" title="New Slide" href="https://slides.new/" target="_blank">
-          <img src="https://ssl.gstatic.com/docs/presentations/images/favicon-2023q4.ico" alt="New Slide" />
-          <span class="new-badge">+</span>
-        </a>
+        <div class="footer-app-wrap">
+          <a id="docs-btn" class="footer-btn" title="Google Docs" href="https://docs.google.com/document/u/0/">
+            <img src="https://ssl.gstatic.com/docs/documents/images/docs-favicon-2026-v2.ico" alt="Docs" />
+          </a>
+          <a class="new-badge" title="New Doc" href="https://docs.new/" target="_blank">+</a>
+        </div>
+        <div class="footer-app-wrap">
+          <a id="sheets-btn" class="footer-btn" title="Google Sheets" href="https://docs.google.com/spreadsheets/u/0/">
+            <img src="https://ssl.gstatic.com/docs/spreadsheets/spreadsheets-2026-v2.ico" alt="Sheets" />
+          </a>
+          <a class="new-badge" title="New Sheet" href="https://sheets.new/" target="_blank">+</a>
+        </div>
+        <div class="footer-app-wrap">
+          <a id="slides-btn" class="footer-btn" title="Google Slides" href="https://docs.google.com/presentation/u/0/">
+            <img src="https://ssl.gstatic.com/docs/presentations/images/favicon-2026-v2.ico" alt="Slides" />
+          </a>
+          <a class="new-badge" title="New Slide" href="https://slides.new/" target="_blank">+</a>
+        </div>
       </div>
       <div id="footer-right">
         <button id="refresh-btn" class="footer-btn" title="Refresh">
