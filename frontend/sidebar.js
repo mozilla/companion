@@ -822,17 +822,17 @@ async function init() {
 
   document.getElementById('docs-btn').addEventListener('click', (e) => {
     e.preventDefault();
-    openAppTab('*://docs.google.com/document/*', 'https://docs.google.com/document/u/0/');
+    openAppTab('*://docs.google.com/document/u/*', 'https://docs.google.com/document/u/0/');
   });
 
   document.getElementById('sheets-btn').addEventListener('click', (e) => {
     e.preventDefault();
-    openAppTab('*://docs.google.com/spreadsheets/*', 'https://docs.google.com/spreadsheets/u/0/');
+    openAppTab('*://docs.google.com/spreadsheets/u/*', 'https://docs.google.com/spreadsheets/u/0/');
   });
 
   document.getElementById('slides-btn').addEventListener('click', (e) => {
     e.preventDefault();
-    openAppTab('*://docs.google.com/presentation/*', 'https://docs.google.com/presentation/u/0/');
+    openAppTab('*://docs.google.com/presentation/u/*', 'https://docs.google.com/presentation/u/0/');
   });
 
   // Refresh button

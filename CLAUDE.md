@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Companion is a Firefox WebExtension sidebar that shows upcoming Google Calendar events and recent Drive documents, with meeting join buttons and desktop notifications. Licensed under MPL 2.0.
+Companion is a Firefox WebExtension sidebar built for Firefox Enterprise power users who run everything in the browser (Gmail, Slack, Zoom, Google Workspace, etc.). It shows upcoming Google Calendar events and recent Drive documents, with meeting join buttons and desktop notifications. Features are driven by real workflow friction — fixing quirks of the all-in-browser enterprise experience. Licensed under MPL 2.0.
 
 ## Development
 
