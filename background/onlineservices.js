@@ -215,6 +215,8 @@ class GoogleService {
     const apiTarget = new URL('https://www.googleapis.com/drive/v3/files');
     apiTarget.searchParams.set('orderBy', 'viewedByMeTime desc');
     apiTarget.searchParams.set('pageSize', '10');
+    apiTarget.searchParams.set('includeItemsFromAllDrives', 'true');
+    apiTarget.searchParams.set('supportsAllDrives', 'true');
     apiTarget.searchParams.set('fields', 'files(id,name,webViewLink,iconLink,mimeType,viewedByMeTime,modifiedTime,lastModifyingUser(displayName,me),sharedWithMeTime,sharingUser(displayName))');
 
     let response;
