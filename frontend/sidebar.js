@@ -716,7 +716,14 @@ function applyDocsHeight() {
   if (!savedDocsHeight) return;
   docsView.style.height = '';
   const natural = docsView.scrollHeight;
-  docsView.style.height = Math.min(savedDocsHeight, natural) + 'px';
+  const calendarView = document.getElementById('calendar-view');
+  const calendarMinHeight = 120;
+  const splitterH = 8;
+  const footerH = document.getElementById('footer')?.offsetHeight ?? 0;
+  const calendarTop = calendarView?.getBoundingClientRect().top ?? 0;
+  const maxDocs = window.innerHeight - calendarTop - calendarMinHeight - splitterH - footerH;
+  const h = Math.min(savedDocsHeight, natural, Math.max(40, maxDocs));
+  docsView.style.height = h + 'px';
 }
 
 function initSplitter() {
