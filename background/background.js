@@ -38,11 +38,13 @@ async function maybeNotify() {
   }
 }
 
-browser.notifications.onClicked.addListener(id => {
+browser.notifications.onClicked.addListener(async id => {
   const url = notificationActions.get(id);
   if (url) {
-    browser.tabs.create({ url });
     notificationActions.delete(id);
+    const windows = await browser.windows.getAll({ populate: false });
+    const normalWindow = windows.find(w => !w.incognito && w.type === 'normal');
+    browser.tabs.create({ url, windowId: normalWindow?.id });
   }
 });
 

@@ -330,6 +330,7 @@ function createHeroCard(event) {
 function createCompactEvent(event) {
   const item = document.createElement('a');
   item.className = 'compact-event';
+  item.dataset.eventId = event.id || event.originalId || '';
   item.href = event.url;
   item.style.cursor = 'pointer';
   item.style.textDecoration = 'none';
@@ -807,10 +808,13 @@ async function init() {
     renderCalendar(true);
   });
 
-  function openAppTab(urlPattern, fallbackUrl) {
+  function openAppTab(urlPattern, fallbackUrl, homePathRe) {
     browser.tabs.query({ url: urlPattern, currentWindow: true }).then(tabs => {
-      if (tabs.length && tabs[0].id) {
-        browser.tabs.update(tabs[0].id, { active: true });
+      const target = homePathRe
+        ? tabs.find(t => { try { return homePathRe.test(new URL(t.url).pathname) } catch { return false } })
+        : tabs[0];
+      if (target) {
+        browser.tabs.update(target.id, { active: true });
       } else {
         window.open(fallbackUrl);
       }
@@ -829,17 +833,17 @@ async function init() {
 
   document.getElementById('docs-btn').addEventListener('click', (e) => {
     e.preventDefault();
-    openAppTab('*://docs.google.com/document/u/*', 'https://docs.google.com/document/u/0/');
+    openAppTab('*://docs.google.com/document/*', 'https://docs.google.com/document/u/0/', /^\/document\/u\/\d+\/?$/);
   });
 
   document.getElementById('sheets-btn').addEventListener('click', (e) => {
     e.preventDefault();
-    openAppTab('*://docs.google.com/spreadsheets/u/*', 'https://docs.google.com/spreadsheets/u/0/');
+    openAppTab('*://docs.google.com/spreadsheets/*', 'https://docs.google.com/spreadsheets/u/0/', /^\/spreadsheets\/u\/\d+\/?$/);
   });
 
   document.getElementById('slides-btn').addEventListener('click', (e) => {
     e.preventDefault();
-    openAppTab('*://docs.google.com/presentation/u/*', 'https://docs.google.com/presentation/u/0/');
+    openAppTab('*://docs.google.com/presentation/*', 'https://docs.google.com/presentation/u/0/', /^\/presentation\/u\/\d+\/?$/);
   });
 
   // Refresh button
@@ -964,6 +968,8 @@ async function init() {
         if (!existingIds.has(eventId) && !collapsedHeroes.has(eventId)) {
           const laterSection = container.querySelector('.later-section');
           container.insertBefore(createHeroCard(event), laterSection);
+          // Remove from compact list now that it's promoted to hero
+          laterSection?.querySelector(`.compact-event[data-event-id="${CSS.escape(eventId)}"]`)?.remove();
         }
       });
 
