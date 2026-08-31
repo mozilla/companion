@@ -83,6 +83,16 @@ function sanitizeHTML(html) {
   return doc.body.innerHTML;
 }
 
+function makeCalendarIconUrl() {
+  const day = new Date().getDate();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 859">
+<path fill="#bbe2ff" d="M64.7 150.9C64.7 67.5 132.3 0 215.6 0h368.8c83.3 0 150.9 67.5 150.9 150.9v159.2c0 83.3-67.5 150.9-150.9 150.9H215.6c-83.3 0-150.9-67.5-150.9-150.9z"/>
+<path fill="#3c90ff" d="M1.2 216.8C-9.5 135.3 54 62.9 136.2 62.9h527.6c82.3 0 145.8 72.4 135 154L766.7 461l32.1 244.2c10.7 81.6-52.8 154-135 154H136.2c-82.3 0-145.8-72.4-135-154L33.3 461z"/>
+<text x="400" y="590" font-size="320" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle" font-family="Google Sans,Roboto,Arial,sans-serif">${day}</text>
+</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
 function openUrl(url) {
   browser.tabs.query({ url, currentWindow: true }).then(tabs => {
     if (tabs.length && tabs[0].id) {
@@ -821,6 +831,12 @@ async function init() {
     });
   }
 
+  document.getElementById('cal-icon').src = makeCalendarIconUrl();
+  document.getElementById('cal-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    openInCalendarTab('https://calendar.google.com');
+  });
+
   document.getElementById('gmail-btn').addEventListener('click', (e) => {
     e.preventDefault();
     openAppTab('*://mail.google.com/*', 'https://mail.google.com/');
@@ -972,6 +988,8 @@ async function init() {
           laterSection?.querySelector(`.compact-event[data-event-id="${CSS.escape(eventId)}"]`)?.remove();
         }
       });
+
+      document.getElementById('cal-icon').src = makeCalendarIconUrl();
 
       // Update section label
       const label = container.querySelector('.section-label');
