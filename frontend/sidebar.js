@@ -83,6 +83,37 @@ function sanitizeHTML(html) {
   return doc.body.innerHTML;
 }
 
+// Runs of box-drawing or ASCII rule characters, used to fence conference blocks
+const SEPARATOR_RE = /^[\s─-╿_=*-]{3,}$/;
+
+// Once conference links are pulled out of a description, the scaffolding that
+// framed them is left behind: separator runs, then containers holding nothing
+// but line breaks. Drop all of it so the description collapses to nothing when
+// the conference block was all it contained.
+function removeEmptyScaffolding(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const separators = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (SEPARATOR_RE.test(node.textContent)) separators.push(node);
+  }
+  separators.forEach(n => n.remove());
+
+  let removed;
+  do {
+    removed = false;
+    root.querySelectorAll('*').forEach(el => {
+      if (el.tagName === 'BR' || el.tagName === 'IMG') return;
+      if (el.textContent.trim() || el.querySelector('img')) return;
+      el.remove();
+      removed = true;
+    });
+  } while (removed);
+
+  while (root.firstChild && root.firstChild.nodeName === 'BR') root.firstChild.remove();
+  while (root.lastChild && root.lastChild.nodeName === 'BR') root.lastChild.remove();
+}
+
 function makeCalendarIconUrl() {
   const day = new Date().getDate();
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 859">
@@ -235,18 +266,14 @@ function createHeroCard(event) {
 
   let descEl = null;
   if (event.description && event.description.trim()) {
-    descEl = document.createElement('div');
-    descEl.className = 'hero-description';
-    descEl.style.display = 'none';
-    descEl.innerHTML = sanitizeHTML(event.description);
+    const desc = document.createElement('div');
+    desc.className = 'hero-description';
+    desc.style.display = 'none';
+    desc.innerHTML = sanitizeHTML(event.description);
 
-    descEl.querySelectorAll('a[href]').forEach(a => {
+    desc.querySelectorAll('a[href]').forEach(a => {
       if (isConferenceUrl(a.href)) {
-        const parent = a.parentElement;
         a.remove();
-        if (parent && parent !== descEl && !parent.textContent.trim()) {
-          parent.remove();
-        }
       } else {
         a.addEventListener('click', e => {
           e.preventDefault();
@@ -255,21 +282,30 @@ function createHeroCard(event) {
       }
     });
 
-    const arrow = document.createElement('img');
-    arrow.className = 'hero-description-arrow';
-    arrow.src = 'public/arrow-down.svg';
-    arrow.setAttribute('role', 'presentation');
+    // Conference links get their own Join button, so drop the separators and
+    // empty containers that were only there to frame them.
+    removeEmptyScaffolding(desc);
 
-    const chevron = document.createElement('button');
-    chevron.className = 'hero-desc-chevron';
-    chevron.title = 'Description';
-    chevron.appendChild(arrow);
-    chevron.addEventListener('click', () => {
-      const isExpanded = descEl.style.display !== 'none';
-      descEl.style.display = isExpanded ? 'none' : 'block';
-      arrow.classList.toggle('expanded', !isExpanded);
-    });
-    timeRow.appendChild(chevron);
+    // Only offer the chevron if something survived the stripping
+    if (desc.textContent.trim() || desc.querySelector('img')) {
+      descEl = desc;
+
+      const arrow = document.createElement('img');
+      arrow.className = 'hero-description-arrow';
+      arrow.src = 'public/arrow-down.svg';
+      arrow.setAttribute('role', 'presentation');
+
+      const chevron = document.createElement('button');
+      chevron.className = 'hero-desc-chevron';
+      chevron.title = 'Description';
+      chevron.appendChild(arrow);
+      chevron.addEventListener('click', () => {
+        const isExpanded = desc.style.display !== 'none';
+        desc.style.display = isExpanded ? 'none' : 'block';
+        arrow.classList.toggle('expanded', !isExpanded);
+      });
+      timeRow.appendChild(chevron);
+    }
   }
 
   card.appendChild(timeRow);
