@@ -4,7 +4,8 @@
 
 function isActiveCall() {
   const url = location.href;
-  if (/^https:\/\/app\.zoom\.us\/wc\//.test(url)) return true;
+  // Calls live at /wc/<meeting id>/join; /wc/home is the landing page, not a call
+  if (/^https:\/\/app\.zoom\.us\/wc\/\d+\//.test(url)) return true;
   if (/^https:\/\/meet\.google\.com\/[a-z]+-[a-z]+-[a-z]+/.test(url)) return true;
   if (/^https:\/\/teams\.microsoft\.com\/(meet|light-meetings)\//.test(url)) return true;
   if (/^https:\/\/[^/]*\.webex\.com\/(wc|meet)\//.test(url)) return true;
