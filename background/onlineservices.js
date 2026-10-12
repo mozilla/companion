@@ -155,15 +155,17 @@ class GoogleService {
 
         for (let result of results.items) {
           try {
-            if (
-              calendar.id == 'primary' &&
-              result.attendees &&
-              !result.attendees.filter(
-                (attendee) =>
-                  attendee.self === true &&
-                  attendee.responseStatus !== 'declined'
-              ).length
-            ) {
+            // Your response wins when you're on the guest list. When you aren't on
+            // it at all, organizing the event still counts as being involved --
+            // Google leaves you out of attendees when you invite a group alias.
+            const selfAttendee = result.attendees?.find(
+              (attendee) => attendee.self === true
+            )
+            const involved = selfAttendee
+              ? selfAttendee.responseStatus !== 'declined'
+              : result.organizer?.self === true ||
+                result.organizer?.email == this.emailAddress
+            if (calendar.id == 'primary' && result.attendees && !involved) {
               continue
             }
             let event = parseGoogleCalendarResult(result, this.emailAddress)
